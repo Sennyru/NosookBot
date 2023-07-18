@@ -1,6 +1,9 @@
 venv/
 
+# ide
 .idea/
 .vscode/
 
+# secrets
 .env
+firebase-admin.json
