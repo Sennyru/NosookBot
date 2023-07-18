@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
-from utility import log, get_cogs, cog_logger, slash_logger
+from datetime import datetime
+from pytz import timezone
+from utility import log, get_cogs, cog_logger
 
 
 class Core(commands.Cog):
@@ -12,13 +14,27 @@ class Core(commands.Cog):
     async def on_ready(self):
         await self.bot.change_presence(activity=discord.Game(name="노숙"))
         
-        log(f"{self.bot.user} 온라인!")
+        log(f"{self.bot.user.display_name} 온라인!")
         await self.bot.get_channel(1006937118796435486).send("온라인!")
     
     
     @commands.Cog.listener()
     async def on_application_command(self, ctx: discord.ApplicationContext):
         log(f"{ctx.author.name}({ctx.author.id})(이)가 /{ctx.command.name} 사용")
+    
+    
+    @commands.Cog.listener()
+    async def on_application_command_error(self, ctx: discord.ApplicationContext, error: discord.DiscordException):
+        if isinstance(error, commands.errors.MissingPermissions):
+            await ctx.respond(f"`{', '.join(error.missing_permissions)}` 권한이 필요합니다.", ephemeral=True)
+            return
+        
+        embed = discord.Embed(title="❌ 오류가 발생했습니다.", description=f"```py\n{error}```", color=0xff0000)
+        embed.set_footer(text=f"{self.bot.get_user(self.bot.owner_ids[0]).display_name}(으)로 문의해주세요.",
+                         icon_url=self.bot.user.display_avatar.url)
+        embed.timestamp = datetime.now(timezone('Asia/Seoul'))
+        await ctx.respond(embed=embed, ephemeral=True)
+        raise error
     
     
     @commands.slash_command(name="리로드", description="봇의 명령어를 새로고침합니다.", guild_ids=[741194068939243531])
