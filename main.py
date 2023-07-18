@@ -2,16 +2,18 @@ import discord
 from sys import argv
 from dotenv import load_dotenv
 from os import getenv
+from utility import log, get_cogs
+
+
+log("로딩...")
 
 dev = len(argv) >= 2 and argv[1] == "dev"
 
 load_dotenv()
-token = getenv("TOKEN_ALPHA" if dev else "TOKEN")
+token = getenv("TOKEN" if not dev else "TOKEN_ALPHA")
 
-bot = discord.Bot()
+bot = discord.Bot(intents=discord.Intents.all())
 
-@bot.event
-async def on_ready():
-    print(f"{bot.user} 온라인!")
+bot.load_extensions(*get_cogs())
 
 bot.run(token)
