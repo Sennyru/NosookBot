@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from utility import log, get_cogs
+from utility import log, get_cogs, cog_logger, slash_logger
 
 
 class Core(commands.Cog):
@@ -16,7 +16,12 @@ class Core(commands.Cog):
         await self.bot.get_channel(1006937118796435486).send("온라인!")
     
     
-    @commands.slash_command(name="리로드", description="(Owner 전용) 봇의 명령어를 새로고침합니다.", guild_ids=[741194068939243531])
+    @commands.Cog.listener()
+    async def on_application_command(self, ctx: discord.ApplicationContext):
+        log(f"{ctx.author.name}({ctx.author.id})(이)가 /{ctx.command.name} 사용")
+    
+    
+    @commands.slash_command(name="리로드", description="봇의 명령어를 새로고침합니다.", guild_ids=[741194068939243531])
     @commands.is_owner()
     async def slash_reload(self, ctx: discord.ApplicationContext):
         log("리로드 중")
@@ -38,5 +43,6 @@ class Core(commands.Cog):
     
 
 
+@cog_logger
 def setup(bot: discord.Bot):
     bot.add_cog(Core(bot))
