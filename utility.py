@@ -1,4 +1,7 @@
-""" 전역적으로 쓰이는 함수 모음 """
+"""
+* log(ctx): 로그를 콘솔에 출력한다.
+* get_cogs() -> map: Cogs 폴더에 있는 모든 Cog 목록을 반환한다.
+"""
 
 from datetime import datetime
 from pytz import timezone
