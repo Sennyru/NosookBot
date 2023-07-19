@@ -1,5 +1,8 @@
 venv/
 
+# temp
+__pycache__/
+
 # ide
 .idea/
 .vscode/
