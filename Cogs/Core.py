@@ -39,7 +39,7 @@ class Core(commands.Cog):
     
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
-        embed = discord.Embed(title="🟢 노숙봇", color=0x78b159)
+        embed = discord.Embed(title="🟢 노숙봇", description="https://github.com/Secon0101/NosookBot", color=0x78b159)
         embed.add_field(name="v0.4-beta", value="""
 * 전체 코드 리메이크!
 * **`/리얼타임`** 명령어로 실시간 타임라인 채널 설정 가능. 이름 그대로 실시간으로 업데이트됩니다!
