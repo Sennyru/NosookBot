@@ -18,6 +18,10 @@ class Status(Enum):
 
 
 class CallLog(commands.Cog):
+    
+    CLOCK_ICONS = "🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦"
+    
+    
     def __init__(self, bot: discord.Bot):
         self.bot = bot
         
@@ -90,7 +94,7 @@ class CallLog(commands.Cog):
         await message.add_reaction("🔄")
         await message.edit(embed=CallLog.make_timeline_embed(channel.guild))
         log(f"서버 {channel.guild.id} 타임라인 업데이트됨")
-        await message.clear_reactions()
+        await message.remove_reaction("🔄", self.bot.user)
     
     
     @staticmethod
@@ -99,7 +103,6 @@ class CallLog(commands.Cog):
         
         TIME_SPAN = 12  # 최근 12시간
         INTERVAL = 60 * 60  # 1시간
-        CLOCK_ICONS = "🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦"
         
         current = int(time())
         end = current - current % INTERVAL + INTERVAL  # 타임라인 오른쪽 끝 시각
@@ -144,7 +147,7 @@ class CallLog(commands.Cog):
             hour = datetime.fromtimestamp(current, timezone('Asia/Seoul')).hour
             clock, i = "", hour
             for _ in range(TIME_SPAN):
-                clock = CLOCK_ICONS[i] + clock
+                clock = CallLog.CLOCK_ICONS[i] + clock
                 i = (i - 1) % 24
             
             embed.add_field(name=clock, value='\n'.join(''.join(reversed(value)) for value in timeline.values()))
