@@ -179,6 +179,11 @@ class CallLog(commands.Cog):
         
         confirm = await ctx.respond("이 채널을 **실시간 타임라인 채널**로 설정할까요?", view=Button(), ephemeral=True)
     
+    
+    @commands.slash_command(name="타임라인", description="통화 기록을 보여줍니다.")
+    async def slash_show_timeline(self, ctx: discord.ApplicationContext):
+        await ctx.respond(embed=CallLog.make_timeline_embed(ctx.guild))
+    
 
 
 @cog_logger
