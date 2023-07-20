@@ -129,11 +129,15 @@ class CallLog(commands.Cog):
                         while t - INTERVAL > int(action_time) and t > start:
                             timeline[member_id].append('⬛')
                             t -= INTERVAL
-                
-                if t <= start:  # 타임라인 왼쪽 끝에 도달하면 멈춤
+
+                # 타임라인 왼쪽 끝에 도달하면 멈춤
+                if t <= start:
                     break
             
-            while t > start:  # 처음 액션까지 본 경우, 그 이전은 알 수 없기 때문에 빈칸으로 채움
+            # 처음 액션까지 본 경우, 그 이전은 알 수 없기 때문에 빈칸으로 채움
+            if member_id not in timeline:
+                continue
+            while t > start:
                 timeline[member_id].append('▪️')
                 t -= INTERVAL
         
