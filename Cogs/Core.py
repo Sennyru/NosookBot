@@ -41,7 +41,7 @@ class Core(commands.Cog):
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description="https://github.com/Secon0101/NosookBot", color=0x78b159)
         embed.add_field(name="v0.4-beta2", value="""
-* 봇 실행 시 실시간 타임라인 업데이트
+* 봇 실행 시 실시간 타임라인 업데이트 및 채널 메시지 삭제
 * `/타임라인` 명령어에 시간 구간 매개변수 추가. 그 시간 동안의 타임라인을 보여줍니다.
         """, inline=False)
         embed.add_field(name="v0.4-beta", value="""
