@@ -76,7 +76,7 @@ class CallLog(commands.Cog):
                 
                 async for message in channel.history(limit=None):
                     if message.author != self.bot.user:
-                        await message.delete()
+                        await message.delete(reason="실시간 타임라인 채널 메시지 삭제")
         
         log("초기화 완료")
     
@@ -233,6 +233,15 @@ class CallLog(commands.Cog):
         
         confirm = await ctx.respond("이 채널을 **실시간 타임라인 채널**로 설정할까요?", view=Button(), ephemeral=True)
     
+    
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author == self.bot.user:
+            return
+        
+        if message.channel.id == db.reference(f"realtime_channel/{message.guild.id}/channel").get():
+            if message.channel.permissions_for(message.guild.me).manage_messages:
+                await message.delete(delay=10*60, reason="실시간 타임라인 채널 메시지 삭제")
 
 
 @cog_logger
