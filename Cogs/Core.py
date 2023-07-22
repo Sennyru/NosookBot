@@ -33,7 +33,7 @@ class Core(commands.Cog):
         embed.set_footer(text=f"{self.bot.get_user(self.bot.owner_ids[0]).display_name}(으)로 문의해주세요.",
                          icon_url=self.bot.user.display_avatar.url)
         embed.timestamp = datetime.now(timezone('Asia/Seoul'))
-        await ctx.respond(embed=embed, ephemeral=True)
+        await ctx.respond(embed=embed, view=None, ephemeral=True)
         raise error
     
     
