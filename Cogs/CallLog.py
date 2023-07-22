@@ -20,6 +20,7 @@ class Status(Enum):
 class CallLog(commands.Cog):
     
     CLOCK_ICONS = "🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦"
+    MSG_DELETE_DELAY_MIN = 5
     
     
     def __init__(self, bot: discord.Bot):
@@ -69,14 +70,8 @@ class CallLog(commands.Cog):
                 
                 # 채팅 클리어
                 channel_id = realtime_data[guild_id]["channel"]
-                channel = guild.get_channel(channel_id)
-                if not channel.permissions_for(guild.me).manage_messages:
-                    log(f"서버 {guild_id}의 메시지 삭제 권한이 없습니다.")
-                    continue
-                
-                async for message in channel.history(limit=None):
-                    if message.author != self.bot.user:
-                        await message.delete(reason="실시간 타임라인 채널 메시지 삭제")
+                channel = guild.get_channel(channel_id) or await guild.fetch_channel(channel_id)
+                await CallLog.clear_other_messages(channel, realtime_data[guild_id]["message"])
         
         log("초기화 완료")
     
@@ -220,28 +215,54 @@ class CallLog(commands.Cog):
         class Button(discord.ui.View):
             @discord.ui.button(label="예", style=discord.ButtonStyle.green)
             async def button_yes(self, button: discord.ui.Button, interaction: discord.Interaction):
+                
+                # 실시간 타임라인 채널로 설정
                 timeline = await interaction.channel.send(embed=await CallLog.make_timeline_embed(interaction.guild))
                 db.reference(f"realtime_channel/{ctx.guild.id}").update({
                     "channel": ctx.channel.id,
                     "message": timeline.id
                 })
                 await confirm.edit_original_response(content="채널을 **실시간 타임라인 채널**로 설정했습니다!", view=None)
+                
+                permissions = timeline.channel.permissions_for(timeline.guild.me)
+                if permissions.manage_channels:
+                    await timeline.channel.edit(topic=f"타임라인 이외의 메시지는 {CallLog.MSG_DELETE_DELAY_MIN}분 뒤에 삭제됩니다.")
+                if permissions.manage_messages:
+                    await timeline.pin(reason="실시간 타임라인 메시지 고정")
+                    await CallLog.clear_other_messages(timeline.channel, timeline.id)
             
             @discord.ui.button(label="아니요", style=discord.ButtonStyle.red)
             async def button_no(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await confirm.edit_original_response(content="실시간 타임라인 채널 등록을 취소하였습니다.", view=None)
         
-        confirm = await ctx.respond("이 채널을 **실시간 타임라인 채널**로 설정할까요?", view=Button(), ephemeral=True)
+        confirm = await ctx.respond(f"""
+이 채널을 **실시간 타임라인 채널**로 설정할까요? 설정 시 **다른 모든 메시지는 삭제됩니다.**
+이후 올라오는 메시지는 {CallLog.MSG_DELETE_DELAY_MIN}분 뒤에 삭제되므로, 타임라인에 대한 대화가 가능합니다.""",
+                                    view=Button(), ephemeral=True)
+    
+    
+    @staticmethod
+    async def clear_other_messages(channel: discord.TextChannel, timeline_id: int):
+        """ 실시간 타임라인 채널에서 타임라인 이외의 메시지를 모두 삭제한다. """
+        
+        if not channel.permissions_for(channel.guild.me).manage_messages:
+            log(f"서버 {channel.guild.id}의 메시지 삭제 권한이 없습니다.")
+            return
+        
+        async for message in channel.history(limit=None):
+            if message.id != timeline_id:
+                await message.delete()
     
     
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author == self.bot.user:
+        if not message.channel or not message.guild:
             return
         
+        # 실시간 타임라인 채널에 올라오는 메시지는 일정 시간 뒤에 삭제
         if message.channel.id == db.reference(f"realtime_channel/{message.guild.id}/channel").get():
             if message.channel.permissions_for(message.guild.me).manage_messages:
-                await message.delete(delay=10*60, reason="실시간 타임라인 채널 메시지 삭제")
+                await message.delete(delay=CallLog.MSG_DELETE_DELAY_MIN * 60, reason="실시간 타임라인 채널 메시지 삭제")
 
 
 @cog_logger

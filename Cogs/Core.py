@@ -41,8 +41,10 @@ class Core(commands.Cog):
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description="https://github.com/Secon0101/NosookBot", color=0x78b159)
         embed.add_field(name="v0.4-beta2", value="""
-* 봇 실행 시 실시간 타임라인 업데이트 및 채널 메시지 삭제
-* `/타임라인` 명령어에 시간 구간 매개변수 추가. 그 시간 동안의 타임라인을 보여줍니다.
+* 봇 실행 시 실시간 타임라인을 업데이트하고 채널 메시지를 삭제합니다.
+* `/리얼타임` 사용 시 그 채널의 모든 메시지를 삭제하고, 메시지를 고정하고, 채널 설명을 바꿉니다.
+* 실시간 타임라인 채널에 올라오는 메시지는 5분 뒤에 삭제됩니다.
+* `/타임라인` 명령어에 시간 구간 매개변수를 사용할 수 있습니다. 그 시간 동안의 타임라인을 보여줍니다.
         """, inline=False)
         embed.add_field(name="v0.4-beta", value="""
 * 전체 코드 리메이크!
