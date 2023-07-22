@@ -24,12 +24,7 @@ class CallLog(commands.Cog):
     
     def __init__(self, bot: discord.Bot):
         self.bot = bot
-        CallLog.connect_to_db()
-    
-    @staticmethod
-    def connect_to_db():
-        """ 데이터베이스에 연결한다. """
-        
+
         # 파이어베이스
         if firebase._apps:
             log("이미 파이어베이스에 연결됨")
@@ -37,7 +32,7 @@ class CallLog(commands.Cog):
         
         log("파이어베이스 연결 중...")
         fb_admin = "firebase-admin.json"
-        
+
         # 파일이 없거나 비어 있으면 생성
         need_to_create = False
         if not exists(fb_admin):
@@ -52,19 +47,63 @@ class CallLog(commands.Cog):
             with open(fb_admin, 'w') as f:
                 f.write(b64decode(getenv("FIREBASE_ADMIN_BASE64")).decode("utf-8"))
             log(f"{fb_admin} 생성 완료")
-        
+
         cred = firebase.credentials.Certificate("firebase-admin.json")
         firebase.initialize_app(cred, {"databaseURL": getenv("DATABASE_URL")})
         log("파이어베이스 로드 완료")
     
     
-    async def update_call_log(self, user_id: int, status: Status, channel: discord.VoiceChannel):
+    @commands.Cog.listener()
+    async def on_ready(self):
+
+        # 실시간 타임라인 업데이트
+        log("실시간 타임라인 채널 초기화 중...")
+        realtime_data = db.reference("realtime_channel").get()
+        for guild_id in realtime_data:
+            try:
+                guild = self.bot.get_guild(int(guild_id)) or await self.bot.fetch_guild(int(guild_id))
+            except discord.errors.NotFound:
+                log(f"서버 {guild_id}를 찾을 수 없습니다.")
+            else:
+                await self.update_realtime_timeline(guild)
+                
+                # 채팅 클리어
+                channel_id = realtime_data[guild_id]["channel"]
+                channel = guild.get_channel(channel_id)
+                if not channel.permissions_for(guild.me).manage_messages:
+                    log(f"서버 {guild_id}의 메시지 삭제 권한이 없습니다.")
+                    continue
+                
+                async for message in channel.history(limit=None):
+                    if message.author != self.bot.user:
+                        await message.delete()
+        
+        log("초기화 완료")
+    
+    
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member,
+                                    before: discord.VoiceState, after: discord.VoiceState):
+        # on join
+        if before.channel is None and after.channel is not None:
+            await CallLog.update_call_log(member.id, Status.JOIN, after.channel)
+            await self.update_realtime_timeline(after.channel.guild)
+        
+        # on leave
+        elif before.channel is not None and after.channel is None:
+            await CallLog.update_call_log(member.id, Status.LEAVE, before.channel)
+            await self.update_realtime_timeline(before.channel.guild)
+    
+    
+    @staticmethod
+    async def update_call_log(user_id: int, status: Status, channel: discord.VoiceChannel):
         """ 통화 기록을 데이터베이스에 저장한다. """
         
         db.reference(f"call_log/{channel.guild.id}/{user_id}/{int(time())}").update({
             "status": status.value,
             "channel": channel.id,
         })
+    
     
     async def update_realtime_timeline(self, guild: discord.Guild):
         """ 서버의 타임라인을 만들고 업데이트한다. """
@@ -92,6 +131,7 @@ class CallLog(commands.Cog):
             await message.remove_reaction("🔄", self.bot.user)
         else:
             log(f"서버 {guild.id} 타임라인 업데이트 실패. 메시지를 수정할 수 없습니다. 혹시 노숙봇이 아니신가요?")
+    
     
     @staticmethod
     async def make_timeline_embed(guild: discord.Guild, time_span=12) -> discord.Embed:
@@ -163,33 +203,10 @@ class CallLog(commands.Cog):
         return embed
     
     
-    @commands.Cog.listener()
-    async def on_ready(self):
-        
-        # 실시간 타임라인 업데이트
-        log("실시간 타임라인 업데이트 중...")
-        for guild_id in db.reference("realtime_channel").get():
-            try:
-                guild = self.bot.get_guild(int(guild_id)) or await self.bot.fetch_guild(int(guild_id))
-            except discord.errors.NotFound:
-                log(f"서버 {guild_id}를 찾을 수 없습니다.")
-            else:
-                await self.update_realtime_timeline(guild)
-        log("실시간 타임라인 업데이트 완료")
-    
-    
-    @commands.Cog.listener()
-    async def on_voice_state_update(self, member: discord.Member,
-                                    before: discord.VoiceState, after: discord.VoiceState):
-        # on join
-        if before.channel is None and after.channel is not None:
-            await self.update_call_log(member.id, Status.JOIN, after.channel)
-            await self.update_realtime_timeline(after.channel.guild)
-
-        # on leave
-        elif before.channel is not None and after.channel is None:
-            await self.update_call_log(member.id, Status.LEAVE, before.channel)
-            await self.update_realtime_timeline(before.channel.guild)
+    @commands.slash_command(name="타임라인", description="통화 기록을 보여줍니다.")
+    async def slash_show_timeline(self, ctx: discord.ApplicationContext, time_span: discord.Option(
+        int, "최근 n시간의 기록 조회 (기간이 길 경우 임베드가 잘릴 수 있음)", min_value=1, max_value=24, default=12)):
+        await ctx.respond(embed=await CallLog.make_timeline_embed(ctx.guild, time_span))
     
     
     @commands.has_permissions(manage_channels=True)
@@ -215,12 +232,6 @@ class CallLog(commands.Cog):
                 await confirm.edit_original_response(content="실시간 타임라인 채널 등록을 취소하였습니다.", view=None)
         
         confirm = await ctx.respond("이 채널을 **실시간 타임라인 채널**로 설정할까요?", view=Button(), ephemeral=True)
-    
-    
-    @commands.slash_command(name="타임라인", description="통화 기록을 보여줍니다.")
-    async def slash_show_timeline(self, ctx: discord.ApplicationContext, time_span: discord.Option(
-        int, "최근 n시간의 기록 조회 (기간이 길 경우 임베드가 잘릴 수 있음)", min_value=1, max_value=24, default=12)):
-        await ctx.respond(embed=await CallLog.make_timeline_embed(ctx.guild, time_span))
     
 
 
