@@ -87,14 +87,14 @@ class CallLog(commands.Cog):
         
         if message.author == self.bot.user:
             await message.add_reaction("🔄")
-            await message.edit(embed=CallLog.make_timeline_embed(guild))
+            await message.edit(embed=await CallLog.make_timeline_embed(guild))
             log(f"서버 {guild.id} 타임라인 업데이트됨")
             await message.remove_reaction("🔄", self.bot.user)
         else:
             log(f"서버 {guild.id} 타임라인 업데이트 실패. 메시지를 수정할 수 없습니다. 혹시 노숙봇이 아니신가요?")
     
     @staticmethod
-    def make_timeline_embed(guild: discord.Guild, time_span=12) -> discord.Embed:
+    async def make_timeline_embed(guild: discord.Guild, time_span=12) -> discord.Embed:
         """ 실시간 타임라인 임베드를 생성한다. """
         
         INTERVAL = 60 * 60  # 1시간
@@ -124,7 +124,7 @@ class CallLog(commands.Cog):
                         while t - INTERVAL > int(action_time) and t > start:
                             timeline[member_id].append('⬛')
                             t -= INTERVAL
-
+                
                 # 타임라인 왼쪽 끝에 도달하면 멈춤
                 if t <= start:
                     break
@@ -139,8 +139,14 @@ class CallLog(commands.Cog):
         # 임베드 생성
         embed = discord.Embed(title="타임라인", color=0x78b159)
         if timeline:
-            embed.add_field(name="멤버",
-                            value='\n'.join(map(lambda id: guild.get_member(int(id)).display_name, timeline.keys())))
+            members = []
+            for id in timeline:
+                member = guild.get_member(int(id)) or await guild.fetch_member(int(id))
+                if member.name != member.display_name:
+                    members.append(f"{member.display_name} ({member.name})")
+                else:
+                    members.append(f"{member.name}")
+            embed.add_field(name="멤버", value='\n'.join(members))
             
             # 위쪽에 시간 표시
             hour = datetime.fromtimestamp(current, timezone('Asia/Seoul')).hour
@@ -162,9 +168,9 @@ class CallLog(commands.Cog):
         
         # 실시간 타임라인 업데이트
         log("실시간 타임라인 업데이트 중...")
-        for guild_id in db.reference("realtime_channel").get().keys():
+        for guild_id in db.reference("realtime_channel").get():
             try:
-                guild = await self.bot.fetch_guild(int(guild_id))
+                guild = self.bot.get_guild(int(guild_id)) or await self.bot.fetch_guild(int(guild_id))
             except discord.errors.NotFound:
                 log(f"서버 {guild_id}를 찾을 수 없습니다.")
             else:
@@ -197,7 +203,7 @@ class CallLog(commands.Cog):
         class Button(discord.ui.View):
             @discord.ui.button(label="예", style=discord.ButtonStyle.green)
             async def button_yes(self, button: discord.ui.Button, interaction: discord.Interaction):
-                timeline = await interaction.channel.send(embed=CallLog.make_timeline_embed(interaction.guild))
+                timeline = await interaction.channel.send(embed=await CallLog.make_timeline_embed(interaction.guild))
                 db.reference(f"realtime_channel/{ctx.guild.id}").update({
                     "channel": ctx.channel.id,
                     "message": timeline.id
@@ -214,7 +220,7 @@ class CallLog(commands.Cog):
     @commands.slash_command(name="타임라인", description="통화 기록을 보여줍니다.")
     async def slash_show_timeline(self, ctx: discord.ApplicationContext, time_span: discord.Option(
         int, "최근 n시간의 기록 조회 (기간이 길 경우 임베드가 잘릴 수 있음)", min_value=1, max_value=24, default=12)):
-        await ctx.respond(embed=CallLog.make_timeline_embed(ctx.guild, time_span))
+        await ctx.respond(embed=await CallLog.make_timeline_embed(ctx.guild, time_span))
     
 
 
