@@ -40,17 +40,12 @@ class Core(commands.Cog):
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description="https://github.com/Secon0101/NosookBot", color=0x78b159)
-        embed.add_field(name="v0.4-beta2", value="""
-* 봇 실행 시 실시간 타임라인을 업데이트하고 채널 메시지를 삭제합니다.
-* `/리얼타임` 사용 시 그 채널의 모든 메시지를 삭제하고, 메시지를 고정하고, 채널 설명을 바꿉니다.
-* 실시간 타임라인 채널에 올라오는 메시지는 5분 뒤에 삭제됩니다.
-* `/타임라인` 명령어에 시간 구간 매개변수를 사용할 수 있습니다. 그 시간 동안의 타임라인을 보여줍니다.
-        """, inline=False)
-        embed.add_field(name="v0.4-beta", value="""
+        embed.add_field(name="v0.4", value="""
 * 전체 코드 리메이크!
-* **`/리얼타임`** 명령어로 실시간 타임라인 채널 설정 가능. 이름 그대로 실시간으로 업데이트됩니다!
-* **`/타임라인`** 명령어로 타임라인 확인 가능.
-* 서버별로 다른 타임라인이 표시됩니다.
+* **`/리얼타임`** 명령어로 실시간 타임라인 채널을 설정할 수 있습니다. 이름 그대로 실시간으로 업데이트됩니다! 그 채널에 올라오는 메시지는 5분 뒤에 삭제됩니다.
+* **`/타임라인`** 명령어로 타임라인을 확인할 수 있습니다. 시간 구간 매개변수를 사용해서 그 시간 동안의 타임라인을 볼 수 있습니다.
+* 봇 실행 시 실시간 타임라인을 업데이트하고 채널 메시지를 삭제합니다.
+* 모든 리얼타임 채널은 한 시간 간격으로 업데이트됩니다.
         """, inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
