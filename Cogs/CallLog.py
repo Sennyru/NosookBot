@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from enum import Enum
 from os import getenv
 from os.path import exists
@@ -56,7 +56,8 @@ class CallLog(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
-
+        self.task_update_timeline_every_hour.start()
+        
         # 실시간 타임라인 업데이트
         log("실시간 타임라인 채널 초기화 중...")
         realtime_data = db.reference("realtime_channel").get()
@@ -194,7 +195,7 @@ class CallLog(commands.Cog):
         else:
             embed.description = "통화 기록이 없네요... :("
         embed.set_footer(text="NosookBot", icon_url=guild.icon.url)
-        embed.timestamp = datetime.utcfromtimestamp(current)
+        embed.timestamp = datetime.now(timezone('Asia/Seoul'))
         return embed
     
     
@@ -263,6 +264,26 @@ class CallLog(commands.Cog):
         if message.channel.id == db.reference(f"realtime_channel/{message.guild.id}/channel").get():
             if message.channel.permissions_for(message.guild.me).manage_messages:
                 await message.delete(delay=CallLog.MSG_DELETE_DELAY_MIN * 60, reason="실시간 타임라인 채널 메시지 삭제")
+    
+    
+    @tasks.loop(minutes=1)
+    async def task_update_timeline_every_hour(self):
+        """ 매 시 정각마다 타임라인을 업데이트하는 루프 """
+        
+        now = datetime.now(timezone("Asia/Seoul"))
+        if now.minute != 0:
+            return
+        
+        log(f"{now.hour}시 정각! 타임라인 업데이트 중...")
+        for guild_id in db.reference("realtime_channel").get():
+            try:
+                guild = self.bot.get_guild(int(guild_id)) or await self.bot.fetch_guild(int(guild_id))
+            except discord.errors.NotFound:
+                log(f"서버 {guild_id}를 찾을 수 없습니다.")
+            else:
+                await self.update_realtime_timeline(guild)
+        log("업데이트 완료")
+    
 
 
 @cog_logger
