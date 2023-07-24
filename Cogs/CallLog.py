@@ -138,7 +138,7 @@ class CallLog(commands.Cog):
         current = int(time())
         end = current - current % INTERVAL + INTERVAL  # 타임라인 오른쪽 끝 시각
         start = end - time_span * INTERVAL  # 타임라인 왼쪽 끝 시각
-        call_log: dict = db.reference(f"call_log/{guild.id}").get()
+        call_log: dict = db.reference(f"call_log/{guild.id}").get() or {}
         timeline: dict = {}  # 멤버별 타임라인 저장
         
         # 타임라인 생성
