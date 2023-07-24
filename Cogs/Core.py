@@ -14,7 +14,7 @@ class Core(commands.Cog):
     async def on_ready(self):
         await self.bot.change_presence(activity=discord.Game(name="노숙"))
         
-        log(f"{self.bot.user.display_name} 온라인!")
+        log(f"{self.bot.user.display_name} 온라인! (서버 {len(self.bot.guilds)}개)")
         await self.bot.get_channel(1006937118796435486).send("온라인!")
     
     
