@@ -1,5 +1,5 @@
 # 노숙봇
-<img src="https://media.discordapp.net/attachments/1135172443309350982/1135173505030312107/nosookbot_timeline.png">
+<img src="https://cdn.discordapp.com/attachments/1135172443309350982/1135177658465001624/nosookbot_timeline.png">
 음성 통화 기록을 보여주는 디스코드 봇!
 
 ## 개발자용
