@@ -50,7 +50,7 @@ class CallLog(commands.Cog):
                 f.write(b64decode(getenv("FIREBASE_ADMIN_BASE64")).decode("utf-8"))
             log(f"{fb_admin} 생성 완료")
 
-        cred = firebase.credentials.Certificate("firebase-admin.json")
+        cred = firebase.credentials.Certificate(fb_admin)
         firebase.initialize_app(cred, {"databaseURL": getenv("DATABASE_URL")})
         log("파이어베이스 로드 완료")
     
@@ -139,18 +139,18 @@ class CallLog(commands.Cog):
         """ 실시간 타임라인 임베드를 생성한다. """
         
         INTERVAL = 60 * 60  # 1시간
-        
+
         current = int(time())
         end = current - current % INTERVAL + INTERVAL  # 타임라인 오른쪽 끝 시각
         start = end - time_span * INTERVAL  # 타임라인 왼쪽 끝 시각
-        call_log: dict = db.reference(f"call_log/{guild.id}").get() or {}
-        timeline: dict = {}  # 멤버별 타임라인 저장
+        call_log: dict[str, dict] = db.reference(f"call_log/{guild.id}").get() or {}
+        timeline: dict[str, list] = {}  # 멤버별 타임라인 저장
         
         # 타임라인 생성
         for member_id, member_logs in call_log.items():
             t = end
             for action_time, data in reversed(member_logs.items()):  # 최근 기록부터 과거로
-
+                
                 # 시간 내에 접속한 기록이 없으면 그 멤버는 표시하지 않음
                 if member_id not in timeline:
                     if int(action_time) < start:
@@ -173,9 +173,10 @@ class CallLog(commands.Cog):
                 if t <= start:
                     break
             
-            # 처음 액션까지 본 경우, 그 이전은 알 수 없기 때문에 빈칸으로 채움
             if member_id not in timeline:
                 continue
+            
+            # 처음 액션까지 본 경우, 그 이전은 알 수 없기 때문에 빈칸으로 채움
             while t > start:
                 timeline[member_id].append('▪️')
                 t -= INTERVAL
@@ -198,7 +199,7 @@ class CallLog(commands.Cog):
                     if member.name != member.display_name:
                         members.append(f"{member.display_name} ({member.name})")
                     else:
-                        members.append(f"{member.name}")
+                        members.append(member.name)
             
             embed.add_field(name="멤버", value='\n'.join(members))
             
