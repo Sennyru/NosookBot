@@ -25,7 +25,13 @@ def get_cogs() -> list[str]:
 def cog_logger(setup):
     """ Cog 로드 시 로그를 출력하는 데코레이터 """
     def wrapper(bot: discord.Bot):
-        log(f"{setup.__module__} 로드 중...")
-        setup(bot)
-        log(f"{setup.__module__} 로드 완료")
+        cog_name = setup.__module__
+        log(f"{cog_name} 로드 중...")
+        try:
+            setup(bot)
+        except Exception as error:
+            log(f"{cog_name} 로드 실패! 아래 예외를 확인하세요.")
+            log(error)
+        else:
+            log(f"{cog_name} 로드 완료")
     return wrapper
