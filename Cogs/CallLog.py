@@ -61,24 +61,30 @@ class CallLog(commands.Cog):
         
         # 실시간 타임라인 업데이트
         log("실시간 타임라인 채널 초기화 중...")
-        realtime_data = db.reference("realtime_channel").get()
+        realtime_data: dict = db.reference("realtime_channel").get()
         for guild_id in realtime_data:
-            try:
-                guild = self.bot.get_guild(int(guild_id)) or await self.bot.fetch_guild(int(guild_id))
-            except discord.errors.NotFound:
-                log(f"서버 {guild_id}를 찾을 수 없습니다.")
-            else:
-                await self.update_realtime_timeline(guild)
-                
-                # 채팅 클리어
-                channel_id = realtime_data[guild_id]["channel"]
-                channel: discord.TextChannel = guild.get_channel(channel_id) or await guild.fetch_channel(channel_id)
-                await CallLog.clear_other_messages(channel, realtime_data[guild_id]["message"])
-                
-                # TODO 0.4 -> 0.5 : 타임라인 메시지 삭제 시간 5분에서 60분으로 변경
-                permissions = channel.permissions_for(channel.guild.me)
-                if permissions.manage_channels:
-                    await channel.edit(topic=f"타임라인 이외의 메시지는 {CallLog.MSG_DELETE_DELAY_MIN}분 뒤에 삭제됩니다.")
+            guild = self.bot.get_guild(int(guild_id))
+            if guild is None:
+                try:
+                    guild = await self.bot.fetch_guild(guild_id)
+                except discord.errors.NotFound:
+                    log(f"서버 {guild_id}를 찾을 수 없습니다.")
+                    continue
+            
+            channel_id = realtime_data[guild_id]["channel"]
+            channel = guild.get_channel(channel_id)
+            if channel is None:
+                try:
+                    channel = await guild.fetch_channel(channel_id)
+                except discord.errors.NotFound:
+                    log(f"서버 {guild_id}의 타임라인 채널({channel_id})을 찾을 수 없습니다.")
+                    continue
+                except discord.errors.Forbidden:
+                    log(f"서버 {guild_id}의 타임라인 채널({channel_id})에 접근할 수 없습니다.")
+                    continue
+            
+            await self.update_realtime_timeline(guild)
+            await CallLog.clear_other_messages(channel, realtime_data[guild_id]["message"])  # 채팅 클리어
         
         log("초기화 완료")
     
@@ -110,21 +116,37 @@ class CallLog(commands.Cog):
     async def update_realtime_timeline(self, guild: discord.Guild):
         """ 서버의 타임라인을 만들고 업데이트한다. """
         
+        if guild is None:
+            return
+        
         ref = db.reference(f"realtime_channel/{guild.id}")
-        realtime_data: dict[str, int] = ref.get()
+        realtime_data: dict = ref.get()
         if realtime_data is None:
             return
         
-        realtime_channel = self.bot.get_channel(realtime_data["channel"])
+        channel_id = realtime_data["channel"]
+        realtime_channel = self.bot.get_channel(channel_id)
         if realtime_channel is None:
-            ref.delete()
-            return
+            try:
+                realtime_channel = await self.bot.fetch_channel(channel_id)
+            except discord.errors.NotFound:
+                log(f"서버 {guild.id}의 타임라인 채널({channel_id})을 찾을 수 없습니다.")
+                return
+            except discord.errors.Forbidden:
+                log(f"서버 {guild.id}의 타임라인 채널({channel_id})에 접근할 수 없습니다.")
+                return
         
-        message = await realtime_channel.fetch_message(realtime_data["message"])
+        message_id = realtime_data["message"]
+        message = self.bot.get_message(message_id)
         if message is None:
-            ref.delete()
-            await realtime_channel.send("타임라인 메시지를 찾을 수 없습니다. 채널을 다시 설정해주세요.")
-            return
+            try:
+                message = await realtime_channel.fetch_message(realtime_data["message"])
+            except discord.errors.NotFound:
+                log(f"서버 {guild.id}의 타임라인 메시지({message_id})를 찾을 수 없습니다.")
+                return
+            except discord.errors.Forbidden:
+                log(f"서버 {guild.id}의 타임라인 메시지({message_id})에 접근할 수 없습니다.")
+                return
         
         if message.author == self.bot.user:
             await message.add_reaction("🔄")
@@ -132,7 +154,7 @@ class CallLog(commands.Cog):
             log(f"서버 {guild.id} 타임라인 업데이트됨")
             await message.remove_reaction("🔄", self.bot.user)
         else:
-            log(f"서버 {guild.id} 타임라인 업데이트 실패. 메시지를 수정할 수 없습니다. 혹시 노숙봇이 아니신가요?")
+            log(f"서버 {guild.id}의 타임라인 메시지({message_id})를 수정할 수 없습니다. 혹시 노숙봇이 아니신가요?")
     
     
     async def make_timeline_embed(self, guild: discord.Guild, time_span=12) -> discord.Embed:
