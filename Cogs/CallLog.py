@@ -10,6 +10,7 @@ from datetime import datetime
 from pytz import timezone
 from time import time
 from utility import log, cog_logger
+from ExtendedBot import ExtendedBot
 
 
 class Status(Enum):
@@ -24,7 +25,7 @@ class CallLog(commands.Cog):
     TIMEZONE = timezone("Asia/Seoul")
     
     
-    def __init__(self, bot: discord.Bot):
+    def __init__(self, bot: ExtendedBot):
         self.bot = bot
         
         # 파이어베이스
@@ -331,5 +332,5 @@ class CallLog(commands.Cog):
 
 
 @cog_logger
-def setup(bot: discord.Bot):
+def setup(bot: ExtendedBot):
     bot.add_cog(CallLog(bot))

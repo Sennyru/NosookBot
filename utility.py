@@ -4,10 +4,10 @@
 * @cog_logger: Cog 로드 시 로그를 출력하는 데코레이터
 """
 
-import discord
 from datetime import datetime
 from os import listdir
 from pytz import timezone
+from ExtendedBot import ExtendedBot
 
 
 def log(message: str):
@@ -24,7 +24,7 @@ def get_cogs() -> list[str]:
 
 def cog_logger(setup):
     """ Cog 로드 시 로그를 출력하는 데코레이터 """
-    def wrapper(bot: discord.Bot):
+    def wrapper(bot: ExtendedBot):
         cog_name = setup.__module__
         log(f"{cog_name} 로드 중...")
         try:

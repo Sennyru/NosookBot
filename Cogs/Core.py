@@ -3,10 +3,11 @@ from discord.ext import commands
 from datetime import datetime
 from pytz import timezone
 from utility import log, get_cogs, cog_logger
+from ExtendedBot import ExtendedBot
 
 
 class Core(commands.Cog):
-    def __init__(self, bot: discord.Bot):
+    def __init__(self, bot: ExtendedBot):
         self.bot = bot
         self.log_channel: discord.TextChannel = None
         self.owner_mention: str = None
@@ -87,5 +88,5 @@ class Core(commands.Cog):
 
 
 @cog_logger
-def setup(bot: discord.Bot):
+def setup(bot: ExtendedBot):
     bot.add_cog(Core(bot))
