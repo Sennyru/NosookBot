@@ -7,10 +7,9 @@ from base64 import b64decode
 import firebase_admin as firebase
 from firebase_admin import db
 from datetime import datetime
-from pytz import timezone
 from time import time
-from utility import log, cog_logger
-from ExtendedBot import ExtendedBot
+from utility import log
+from NosookBot import NosookBot
 
 
 class Status(Enum):
@@ -22,10 +21,9 @@ class CallLog(commands.Cog):
     
     CLOCK_ICONS = "🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦"
     MSG_DELETE_DELAY_MIN = 60
-    TIMEZONE = timezone("Asia/Seoul")
     
     
-    def __init__(self, bot: ExtendedBot):
+    def __init__(self, bot: NosookBot):
         self.bot = bot
         
         # 파이어베이스
@@ -228,7 +226,7 @@ class CallLog(commands.Cog):
             embed.add_field(name="멤버", value='\n'.join(members))
             
             # 위쪽에 시간 표시
-            hour = datetime.fromtimestamp(current, CallLog.TIMEZONE).hour
+            hour = datetime.fromtimestamp(current, NosookBot.timezone).hour
             clock, i = "", hour
             for _ in range(time_span):
                 clock = CallLog.CLOCK_ICONS[i] + clock
@@ -241,7 +239,7 @@ class CallLog(commands.Cog):
         
         icon_url = guild.icon.url if guild.icon else self.bot.user.display_avatar.url
         embed.set_footer(text="🟩 통화 중  ⬛ 나감  ▪️ 알 수 없음",  icon_url=icon_url)
-        embed.timestamp = datetime.now(CallLog.TIMEZONE)
+        embed.timestamp = datetime.now(NosookBot.timezone)
         return embed
     
     
@@ -315,7 +313,8 @@ class CallLog(commands.Cog):
     @tasks.loop(minutes=1)
     async def task_update_timeline_every_hour(self):
         """ 매 시 정각마다 타임라인을 업데이트하는 루프 """
-        now = datetime.now(CallLog.TIMEZONE)
+        
+        now = datetime.now(NosookBot.timezone)
         if now.minute != 0:
             return
         
@@ -331,6 +330,6 @@ class CallLog(commands.Cog):
     
 
 
-@cog_logger
-def setup(bot: ExtendedBot):
+@NosookBot.cog_logger
+def setup(bot: NosookBot):
     bot.add_cog(CallLog(bot))

@@ -1,13 +1,12 @@
 import discord
 from discord.ext import commands
 from datetime import datetime
-from pytz import timezone
-from utility import log, get_cogs, cog_logger
-from ExtendedBot import ExtendedBot
+from utility import log
+from NosookBot import NosookBot
 
 
 class Core(commands.Cog):
-    def __init__(self, bot: ExtendedBot):
+    def __init__(self, bot: NosookBot):
         self.bot = bot
         self.log_channel: discord.TextChannel = None
         self.owner_mention: str = None
@@ -62,7 +61,7 @@ class Core(commands.Cog):
     @commands.is_owner()
     async def slash_reload(self, ctx: discord.ApplicationContext):
         log("리로드 중")
-        for cog in get_cogs():
+        for cog in NosookBot.get_cogs():
             self.bot.unload_extension(cog)
             self.bot.load_extension(cog)
         log("리로드 완료")
@@ -78,7 +77,7 @@ class Core(commands.Cog):
         embed = discord.Embed(title="❌ 오류가 발생했습니다.", description=f"```py\n{error}```", color=0xff0000)
         embed.set_footer(text=f"디스코드 {self.bot.get_user(self.bot.owner_ids[0]).display_name}(으)로 문의해주세요.",
                          icon_url=self.bot.user.display_avatar.url)
-        embed.timestamp = datetime.now(timezone('Asia/Seoul'))
+        embed.timestamp = datetime.now(NosookBot.timezone)
         await ctx.respond(embed=embed, ephemeral=True)
         
         await self.log_channel.send(f"{self.owner_mention} `/{ctx.command.name}` 실행 오류! 당장 로그를 확인하세요!")
@@ -87,6 +86,6 @@ class Core(commands.Cog):
     
 
 
-@cog_logger
-def setup(bot: ExtendedBot):
+@NosookBot.cog_logger
+def setup(bot: NosookBot):
     bot.add_cog(Core(bot))
