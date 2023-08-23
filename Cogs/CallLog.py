@@ -57,7 +57,8 @@ class CallLog(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
-        self.task_update_timeline_every_hour.start()
+        if not self.task_update_timeline_every_hour.is_running():
+            self.task_update_timeline_every_hour.start()
         
         # 실시간 타임라인 업데이트
         log("실시간 타임라인 채널 초기화 중...")
@@ -258,7 +259,7 @@ class CallLog(commands.Cog):
         
         class Button(discord.ui.View):
             @discord.ui.button(label="예", style=discord.ButtonStyle.green)
-            async def button_yes(self_, button: discord.ui.Button, interaction: discord.Interaction):
+            async def button_yes(_, button: discord.ui.Button, interaction: discord.Interaction):
                 
                 # 실시간 타임라인 채널로 설정
                 timeline = await interaction.channel.send(embed=await self.make_timeline_embed(interaction.guild))
