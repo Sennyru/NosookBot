@@ -10,3 +10,6 @@ __pycache__/
 # secrets
 .env
 firebase-admin.json
+
+# etc
+*.png
