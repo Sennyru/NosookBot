@@ -1,7 +1,7 @@
 import discord
 from os import listdir
 from pytz import timezone
-from utility import log
+from datetime import datetime
 
 
 class NosookBot(discord.Bot):
@@ -10,9 +10,17 @@ class NosookBot(discord.Bot):
     color = 0x8fd26a
     timezone = timezone('Asia/Seoul')
     
+    
     def __init__(self, dev: bool, description=None, *args, **options):
         super().__init__(description, *args, **options)
         self.dev = dev
+    
+    @staticmethod
+    def log(message):
+        """ 로그를 콘솔에 출력한다. """
+        
+        time = datetime.now(NosookBot.timezone).strftime("%y%m%d%H%M%S")
+        print(f"[{time}] {message}")
     
     @staticmethod
     def get_cogs() -> list[str]:
@@ -29,14 +37,14 @@ class NosookBot(discord.Bot):
         
         def wrapper(bot: NosookBot):
             cog_name = setup.__module__
-            log(f"{cog_name} 로드 중...")
+            NosookBot.log(f"{cog_name} 로드 중...")
             try:
                 setup(bot)
             except Exception as error:
-                log(f"{cog_name} 로드 실패! 아래 예외를 확인하세요.")
-                log(error)
+                NosookBot.log(f"{cog_name} 로드 실패! 아래 예외를 확인하세요.")
+                NosookBot.log(error)
             else:
-                log(f"{cog_name} 로드 완료")
+                NosookBot.log(f"{cog_name} 로드 완료")
         
         return wrapper
     

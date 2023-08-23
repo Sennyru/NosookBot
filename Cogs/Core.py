@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from datetime import datetime
-from utility import log
 from NosookBot import NosookBot
 
 
@@ -21,19 +20,19 @@ class Core(commands.Cog):
         await self.bot.change_presence(activity=discord.Game(name="노숙"))
         
         guild_count = len(self.bot.guilds)
-        log(f"{self.bot.user.display_name} 온라인! (서버 {guild_count}개)")
+        NosookBot.log(f"{self.bot.user.display_name} 온라인! (서버 {guild_count}개)")
         await self.log_channel.send(f"온라인! (서버 {guild_count}개)")
     
     
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
-        log(f"{guild.name}({guild.id}) 서버에 초대됨")
+        NosookBot.log(f"{guild.name}({guild.id}) 서버에 초대됨")
         await self.log_channel.send(f"{self.owner_mention} `{guild.name}({guild.id})` 서버에 초대되었습니다!!!!")
     
     
     @commands.Cog.listener()
     async def on_application_command(self, ctx: discord.ApplicationContext):
-        log(f"{ctx.user.name}({ctx.user.id})(이)가 /{ctx.command.name} 사용")
+        NosookBot.log(f"{ctx.user.name}({ctx.user.id})(이)가 /{ctx.command.name} 사용")
     
     
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
@@ -60,11 +59,11 @@ class Core(commands.Cog):
     @commands.slash_command(name="리로드", description="Cogs를 새로고침합니다.", guild_ids=[1135172384152891453, 741194068939243531])
     @commands.is_owner()
     async def slash_reload(self, ctx: discord.ApplicationContext):
-        log("리로드 중")
+        NosookBot.log("리로드 중")
         for cog in NosookBot.get_cogs():
             self.bot.unload_extension(cog)
             self.bot.load_extension(cog)
-        log("리로드 완료")
+        NosookBot.log("리로드 완료")
         await ctx.respond("🔄 봇을 리로드하였습니다.", ephemeral=True)
     
     
@@ -81,7 +80,7 @@ class Core(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=True)
         
         await self.log_channel.send(f"{self.owner_mention} `/{ctx.command.name}` 실행 오류! 당장 로그를 확인하세요!")
-        log(f"/{ctx.command.name} 실행 오류! 아래 예외를 확인하세요.")
+        NosookBot.log(f"/{ctx.command.name} 실행 오류! 아래 예외를 확인하세요.")
         raise error
     
 

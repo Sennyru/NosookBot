@@ -2,10 +2,9 @@ import discord
 from sys import argv
 from dotenv import load_dotenv
 from os import getenv
-from utility import log
 from NosookBot import NosookBot
 
-log("로딩...")
+NosookBot.log("로딩...")
 
 dev = len(argv) >= 2 and argv[1] == "dev"
 

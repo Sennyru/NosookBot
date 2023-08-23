@@ -8,7 +8,6 @@ import firebase_admin as firebase
 from firebase_admin import db
 from datetime import datetime
 from time import time
-from utility import log
 from NosookBot import NosookBot
 
 
@@ -28,30 +27,30 @@ class CallLog(commands.Cog):
         
         # 파이어베이스
         if firebase._apps:
-            log("이미 파이어베이스에 연결됨")
+            NosookBot.log("이미 파이어베이스에 연결됨")
             return
-        
-        log("파이어베이스 연결 중...")
+
+        NosookBot.log("파이어베이스 연결 중...")
         fb_admin = "firebase-admin.json"
 
         # 파일이 없거나 비어 있으면 생성
         need_to_create = False
         if not exists(fb_admin):
             need_to_create = True
-            log(f"{fb_admin} 파일 없음. 생성 중...")
+            NosookBot.log(f"{fb_admin} 파일 없음. 생성 중...")
         else:
             with open(fb_admin, 'r') as f:
                 if not f.read():
                     need_to_create = True
-                    log(f"{fb_admin} 파일 비어있음. 생성 중...")
+                    NosookBot.log(f"{fb_admin} 파일 비어있음. 생성 중...")
         if need_to_create:
             with open(fb_admin, 'w') as f:
                 f.write(b64decode(getenv("FIREBASE_ADMIN_BASE64")).decode("utf-8"))
-            log(f"{fb_admin} 생성 완료")
+            NosookBot.log(f"{fb_admin} 생성 완료")
 
         cred = firebase.credentials.Certificate(fb_admin)
         firebase.initialize_app(cred, {"databaseURL": getenv("DATABASE_URL")})
-        log("파이어베이스 로드 완료")
+        NosookBot.log("파이어베이스 로드 완료")
     
     
     @commands.Cog.listener()
@@ -60,7 +59,7 @@ class CallLog(commands.Cog):
             self.task_update_timeline_every_hour.start()
         
         # 실시간 타임라인 업데이트
-        log("실시간 타임라인 채널 초기화 중...")
+        NosookBot.log("실시간 타임라인 채널 초기화 중...")
         realtime_data: dict = db.reference("realtime_channel").get()
         for guild_id in realtime_data:
             guild = self.bot.get_guild(int(guild_id))
@@ -68,7 +67,7 @@ class CallLog(commands.Cog):
                 try:
                     guild = await self.bot.fetch_guild(guild_id)
                 except discord.errors.NotFound:
-                    log(f"서버 {guild_id}를 찾을 수 없습니다.")
+                    NosookBot.log(f"서버 {guild_id}를 찾을 수 없습니다.")
                     continue
             
             channel_id = realtime_data[guild_id]["channel"]
@@ -77,16 +76,16 @@ class CallLog(commands.Cog):
                 try:
                     channel = await guild.fetch_channel(channel_id)
                 except discord.errors.NotFound:
-                    log(f"서버 {guild_id}의 타임라인 채널({channel_id})을 찾을 수 없습니다.")
+                    NosookBot.log(f"서버 {guild_id}의 타임라인 채널({channel_id})을 찾을 수 없습니다.")
                     continue
                 except discord.errors.Forbidden:
-                    log(f"서버 {guild_id}의 타임라인 채널({channel_id})에 접근할 수 없습니다.")
+                    NosookBot.log(f"서버 {guild_id}의 타임라인 채널({channel_id})에 접근할 수 없습니다.")
                     continue
             
             await self.update_realtime_timeline(guild)
             await CallLog.clear_other_messages(channel, realtime_data[guild_id]["message"])  # 채팅 클리어
-        
-        log("초기화 완료")
+
+        NosookBot.log("초기화 완료")
     
     
     @commands.Cog.listener()
@@ -130,10 +129,10 @@ class CallLog(commands.Cog):
             try:
                 realtime_channel = await self.bot.fetch_channel(channel_id)
             except discord.errors.NotFound:
-                log(f"서버 {guild.id}의 타임라인 채널({channel_id})을 찾을 수 없습니다.")
+                NosookBot.log(f"서버 {guild.id}의 타임라인 채널({channel_id})을 찾을 수 없습니다.")
                 return
             except discord.errors.Forbidden:
-                log(f"서버 {guild.id}의 타임라인 채널({channel_id})에 접근할 수 없습니다.")
+                NosookBot.log(f"서버 {guild.id}의 타임라인 채널({channel_id})에 접근할 수 없습니다.")
                 return
         
         message_id = realtime_data["message"]
@@ -142,19 +141,19 @@ class CallLog(commands.Cog):
             try:
                 message = await realtime_channel.fetch_message(realtime_data["message"])
             except discord.errors.NotFound:
-                log(f"서버 {guild.id}의 타임라인 메시지({message_id})를 찾을 수 없습니다.")
+                NosookBot.log(f"서버 {guild.id}의 타임라인 메시지({message_id})를 찾을 수 없습니다.")
                 return
             except discord.errors.Forbidden:
-                log(f"서버 {guild.id}의 타임라인 메시지({message_id})에 접근할 수 없습니다.")
+                NosookBot.log(f"서버 {guild.id}의 타임라인 메시지({message_id})에 접근할 수 없습니다.")
                 return
         
         if message.author == self.bot.user:
             await message.add_reaction("🔄")
             await message.edit(embed=await self.make_timeline_embed(guild))
-            log(f"서버 {guild.id} 타임라인 업데이트됨")
+            NosookBot.log(f"서버 {guild.id} 타임라인 업데이트됨")
             await message.remove_reaction("🔄", self.bot.user)
         else:
-            log(f"서버 {guild.id}의 타임라인 메시지({message_id})를 수정할 수 없습니다. 혹시 노숙봇이 아니신가요?")
+            NosookBot.log(f"서버 {guild.id}의 타임라인 메시지({message_id})를 수정할 수 없습니다. 혹시 노숙봇이 아니신가요?")
     
     
     async def make_timeline_embed(self, guild: discord.Guild, time_span=12) -> discord.Embed:
@@ -291,7 +290,7 @@ class CallLog(commands.Cog):
         """ 실시간 타임라인 채널에서 타임라인 이외의 메시지를 모두 삭제한다. """
         
         if not channel.permissions_for(channel.guild.me).manage_messages:
-            log(f"서버 {channel.guild.id}의 메시지 삭제 권한이 없습니다.")
+            NosookBot.log(f"서버 {channel.guild.id}의 메시지 삭제 권한이 없습니다.")
             return
         
         async for message in channel.history(limit=None):
@@ -317,16 +316,16 @@ class CallLog(commands.Cog):
         now = datetime.now(NosookBot.timezone)
         if now.minute != 0:
             return
-        
-        log(f"{now.hour}시 정각! 타임라인 업데이트 중...")
+
+        NosookBot.log(f"{now.hour}시 정각! 타임라인 업데이트 중...")
         for guild_id in db.reference("realtime_channel").get():
             try:
                 guild = self.bot.get_guild(int(guild_id)) or await self.bot.fetch_guild(int(guild_id))
             except discord.errors.NotFound:
-                log(f"서버 {guild_id}를 찾을 수 없습니다.")
+                NosookBot.log(f"서버 {guild_id}를 찾을 수 없습니다.")
             else:
                 await self.update_realtime_timeline(guild)
-        log("업데이트 완료")
+        NosookBot.log("업데이트 완료")
     
 
 
