@@ -57,7 +57,7 @@ class Core(commands.Cog):
         await ctx.respond(embed=embed)
     
     
-    @commands.slash_command(name="리로드", description="Cogs를 새로고침합니다.", guild_ids=[741194068939243531])
+    @commands.slash_command(name="리로드", description="Cogs를 새로고침합니다.", guild_ids=[1135172384152891453, 741194068939243531])
     @commands.is_owner()
     async def slash_reload(self, ctx: discord.ApplicationContext):
         log("리로드 중")
