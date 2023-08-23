@@ -39,18 +39,7 @@ class Core(commands.Cog):
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description="https://github.com/Secon0101/NosookBot", color=0x78b159)
-        embed.add_field(name="v0.5.3", value="""
-* 타임라인에 색깔 안내 추가
-            """, inline=False)
-        embed.add_field(name="v0.5.2", value="""
-* 메시지 및 채널 탐색 코드 보완
-            """, inline=False)
-        embed.add_field(name="v0.5.1", value="""
-* 서버 아이콘이 없으면 타임라인이 생성되지 않는 버그 수정
-            """, inline=False)
-        embed.add_field(name="v0.5", value="""
-* 리얼타임 채널 메시지 삭제 대기 시간 5분에서 60분으로 변경
-            """, inline=False)
+        embed.add_field(name="v0.6", value="* 리얼타임 메시지까지 1시간 뒤에 삭제되는 버그 수정", inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
                          icon_url=self.bot.get_user(self.bot.owner_ids[0]).avatar.url)

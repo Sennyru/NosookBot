@@ -306,9 +306,17 @@ class CallLog(commands.Cog):
             return
         
         # 실시간 타임라인 채널에 올라오는 메시지는 일정 시간 뒤에 삭제
-        if message.channel.id == db.reference(f"realtime_channel/{message.guild.id}/channel").get():
-            if message.channel.permissions_for(message.guild.me).manage_messages:
-                await message.delete(delay=CallLog.MSG_DELETE_DELAY_MIN * 60, reason="실시간 타임라인 채널 메시지 삭제")
+        channel_data = db.reference(f"realtime_channel/{message.guild.id}").get()
+        if channel_data is None:
+            return
+        if not message.channel.id == channel_data["channel"]:
+            return
+        if not message.channel.permissions_for(message.guild.me).manage_messages:
+            return
+        if message.id == channel_data["message"]:
+            return
+        
+        await message.delete(delay=CallLog.MSG_DELETE_DELAY_MIN * 60, reason="실시간 타임라인 채널 메시지 삭제")
     
     
     @tasks.loop(minutes=1)
