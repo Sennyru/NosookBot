@@ -2,7 +2,7 @@ import discord
 from sys import argv
 from dotenv import load_dotenv
 from os import getenv
-from NosookBot import NosookBot
+from nosookbot import NosookBot
 
 NosookBot.log("로딩...")
 

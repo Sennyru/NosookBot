@@ -8,7 +8,7 @@ import firebase_admin as firebase
 from firebase_admin import db
 from datetime import datetime
 from time import time
-from NosookBot import NosookBot
+from nosookbot import NosookBot
 
 
 class Status(Enum):

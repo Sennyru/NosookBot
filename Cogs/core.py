@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from datetime import datetime
-from NosookBot import NosookBot
+from nosookbot import NosookBot
 
 
 class Core(commands.Cog):
