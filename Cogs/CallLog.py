@@ -238,7 +238,8 @@ class CallLog(commands.Cog):
         else:
             embed.description = "통화 기록이 없네요... :("
         
-        embed.set_footer(text="NosookBot", icon_url=guild.icon.url if guild.icon else self.bot.user.display_avatar.url)
+        icon_url = guild.icon.url if guild.icon else self.bot.user.display_avatar.url
+        embed.set_footer(text="🟩 통화 중  ⬛ 나감  ▪️ 알 수 없음",  icon_url=icon_url)
         embed.timestamp = datetime.now(CallLog.TIMEZONE)
         return embed
     
