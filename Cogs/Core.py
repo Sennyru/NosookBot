@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from datetime import datetime
 from pytz import timezone
+from traceback import format_exc
 from utility import log, get_cogs, cog_logger
 
 
@@ -39,7 +40,9 @@ class Core(commands.Cog):
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description="https://github.com/Secon0101/NosookBot", color=0x78b159)
-        embed.add_field(name="v0.6", value="* 리얼타임 메시지까지 1시간 뒤에 삭제되는 버그 수정", inline=False)
+        embed.add_field(name="v0.6.1", value="""
+* 1시간마다 타임라인 새로고침 중 오류가 발생할 경우 새로고침 task가 아예 중지되는 현상 수정
+                                             """, inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
                          icon_url=self.bot.get_user(self.bot.owner_ids[0]).avatar.url)
@@ -70,7 +73,7 @@ class Core(commands.Cog):
         
         await self.log_channel.send(f"{self.owner_mention} `/{ctx.command.name}` 실행 오류! 당장 로그를 확인하세요!")
         log(f"/{ctx.command.name} 실행 오류! 아래 예외를 확인하세요.")
-        raise error
+        print(format_exc())
     
 
 
