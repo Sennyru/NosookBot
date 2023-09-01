@@ -10,11 +10,18 @@ class NosookBot(discord.Bot):
     github = "https://github.com/Secon0101/NosookBot"
     color = 0x8fd26a
     timezone = timezone('Asia/Seoul')
+    cogs = []
     
     
     def __init__(self, dev: bool, description=None, *args, **options):
         super().__init__(description, *args, **options)
         self.dev = dev
+        
+        # Cogs/*.py cog 목록 가져오기
+        self.cogs = list(map(lambda cog: f"Cogs.{cog[:-3]}",
+                         filter(lambda file: file.endswith(".py"), listdir("Cogs"))))
+        self.cogs.sort(key=lambda cog: cog != "Cogs.core")
+        self.load_extensions(*self.cogs)
     
     @staticmethod
     def log(message):
@@ -22,15 +29,6 @@ class NosookBot(discord.Bot):
         
         time = datetime.now(NosookBot.timezone).strftime("%y%m%d%H%M%S")
         print(f"[{time}] {message}")
-    
-    @staticmethod
-    def get_cogs() -> list[str]:
-        """ Cogs 폴더에 있는 모든 Cog 목록을 반환한다. Cogs.Core가 제일 먼저 있다. """
-        
-        cogs = list(map(lambda cog: f"Cogs.{cog[:-3]}",
-                        filter(lambda file: file.endswith(".py"), listdir("Cogs"))))
-        cogs.sort(key=lambda cog: cog != "Cogs.Core")
-        return cogs
     
     @staticmethod
     def cog_logger(setup):
