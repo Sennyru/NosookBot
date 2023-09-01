@@ -11,11 +11,13 @@ class NosookBot(discord.Bot):
     color = 0x8fd26a
     timezone = timezone('Asia/Seoul')
     cogs = []
+    owner_mention = None
     
     
     def __init__(self, dev: bool, description=None, *args, **options):
         super().__init__(description, *args, **options)
         self.dev = dev
+        self.owner_mention = f"<@{self.owner_ids[0]}>"
         
         # Cogs/*.py cog 목록 가져오기
         self.cogs = list(map(lambda cog: f"Cogs.{cog[:-3]}",

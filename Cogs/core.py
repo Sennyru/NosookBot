@@ -9,14 +9,12 @@ class Core(commands.Cog):
     def __init__(self, bot: NosookBot):
         self.bot = bot
         self.log_channel: discord.TextChannel = None
-        self.owner_mention: str = None
     
     
     @commands.Cog.listener()
     async def on_ready(self):
         log_channel_id = 1138430000442384454
         self.log_channel = self.bot.get_channel(log_channel_id) or await self.bot.fetch_channel(log_channel_id)
-        self.owner_mention = self.bot.get_user(self.bot.owner_ids[0]).mention
         
         await self.bot.change_presence(activity=discord.Game(name="노숙"))
         
