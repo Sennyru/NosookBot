@@ -9,7 +9,7 @@ class NosookBot(discord.Bot):
     
     github = "https://github.com/Secon0101/NosookBot"
     color = 0x8fd26a
-    timezone = timezone('Asia/Seoul')
+    timezone = timezone("Asia/Seoul")
     cogs = []
     owner_mention = None
     
