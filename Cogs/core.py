@@ -27,7 +27,7 @@ class Core(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
         NosookBot.log(f"{guild.name}({guild.id}) 서버에 초대됨")
-        await self.log_channel.send(f"{self.owner_mention} `{guild.name}({guild.id})` 서버에 초대되었습니다!!!!")
+        await self.log_channel.send(f"{self.bot.owner_mention} `{guild.name}({guild.id})` 서버에 초대되었습니다!!!!")
     
     
     @commands.Cog.listener()
@@ -51,7 +51,7 @@ class Core(commands.Cog):
     @commands.is_owner()
     async def slash_reload(self, ctx: discord.ApplicationContext):
         NosookBot.log("리로드 중")
-        for cog in NosookBot.cogs:
+        for cog in self.bot.cogs:
             self.bot.reload_extension(cog)
         NosookBot.log("리로드 완료")
         await ctx.respond("🔄 봇을 리로드하였습니다.", ephemeral=True)
