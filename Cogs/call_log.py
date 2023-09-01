@@ -8,6 +8,7 @@ import firebase_admin as firebase
 from firebase_admin import db
 from datetime import datetime
 from time import time
+from traceback import format_exc
 from nosookbot import NosookBot
 
 
@@ -20,6 +21,7 @@ class CallLog(commands.Cog):
     
     CLOCK_ICONS = "🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦"
     MSG_DELETE_DELAY_MIN = 60
+    TIMEZONE = timezone("Asia/Seoul")
     
     
     def __init__(self, bot: NosookBot):
@@ -304,28 +306,41 @@ class CallLog(commands.Cog):
             return
         
         # 실시간 타임라인 채널에 올라오는 메시지는 일정 시간 뒤에 삭제
-        if message.channel.id == db.reference(f"realtime_channel/{message.guild.id}/channel").get():
-            if message.channel.permissions_for(message.guild.me).manage_messages:
-                await message.delete(delay=CallLog.MSG_DELETE_DELAY_MIN * 60, reason="실시간 타임라인 채널 메시지 삭제")
+        channel_data = db.reference(f"realtime_channel/{message.guild.id}").get()
+        if channel_data is None:
+            return
+        if not message.channel.id == channel_data["channel"]:
+            return
+        if not message.channel.permissions_for(message.guild.me).manage_messages:
+            return
+        if message.id == channel_data["message"]:
+            return
+        
+        await message.delete(delay=CallLog.MSG_DELETE_DELAY_MIN * 60, reason="실시간 타임라인 채널 메시지 삭제")
     
     
     @tasks.loop(minutes=1)
     async def task_update_timeline_every_hour(self):
         """ 매 시 정각마다 타임라인을 업데이트하는 루프 """
         
-        now = datetime.now(NosookBot.timezone)
-        if now.minute != 0:
-            return
+        # task는 예외 발생 시 멈춰버려서 핸들링 필요
+        try:
+            now = datetime.now(NosookBot.timezone)
+            if now.minute != 0:
+                return
 
-        NosookBot.log(f"{now.hour}시 정각! 타임라인 업데이트 중...")
-        for guild_id in db.reference("realtime_channel").get():
-            try:
-                guild = self.bot.get_guild(int(guild_id)) or await self.bot.fetch_guild(int(guild_id))
-            except discord.errors.NotFound:
-                NosookBot.log(f"서버 {guild_id}를 찾을 수 없습니다.")
-            else:
-                await self.update_realtime_timeline(guild)
-        NosookBot.log("업데이트 완료")
+            NosookBot.log(f"{now.hour}시 정각! 타임라인 업데이트 중...")
+            for guild_id in db.reference("realtime_channel").get():
+                try:
+                    guild = self.bot.get_guild(int(guild_id)) or await self.bot.fetch_guild(int(guild_id))
+                except discord.errors.NotFound:
+                    NosookBot.log(f"서버 {guild_id}를 찾을 수 없습니다.")
+                else:
+                    await self.update_realtime_timeline(guild)
+            NosookBot.log("업데이트 완료")
+            
+        except:
+            print(format_exc())
     
 
 

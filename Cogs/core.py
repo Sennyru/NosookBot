@@ -38,18 +38,9 @@ class Core(commands.Cog):
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description=NosookBot.github, color=NosookBot.color)
-        embed.add_field(name="v0.5.3", value="""
-* 타임라인에 색깔 안내 추가
-            """, inline=False)
-        embed.add_field(name="v0.5.2", value="""
-* 메시지 및 채널 탐색 코드 보완
-            """, inline=False)
-        embed.add_field(name="v0.5.1", value="""
-* 서버 아이콘이 없으면 타임라인이 생성되지 않는 버그 수정
-            """, inline=False)
-        embed.add_field(name="v0.5", value="""
-* 리얼타임 채널 메시지 삭제 대기 시간 5분에서 60분으로 변경
-            """, inline=False)
+        embed.add_field(name="v0.6.1", value="""
+        * 1시간마다 타임라인 새로고침 중 오류가 발생할 경우 새로고침 task가 아예 중지되는 현상 수정
+                                                     """, inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
                          icon_url=self.bot.get_user(self.bot.owner_ids[0]).avatar.url)
@@ -61,8 +52,7 @@ class Core(commands.Cog):
     async def slash_reload(self, ctx: discord.ApplicationContext):
         NosookBot.log("리로드 중")
         for cog in NosookBot.get_cogs():
-            self.bot.unload_extension(cog)
-            self.bot.load_extension(cog)
+            self.bot.reload_extension(cog)
         NosookBot.log("리로드 완료")
         await ctx.respond("🔄 봇을 리로드하였습니다.", ephemeral=True)
     
@@ -81,7 +71,7 @@ class Core(commands.Cog):
         
         await self.log_channel.send(f"{self.owner_mention} `/{ctx.command.name}` 실행 오류! 당장 로그를 확인하세요!")
         NosookBot.log(f"/{ctx.command.name} 실행 오류! 아래 예외를 확인하세요.")
-        raise error
+        print(format_exc())
     
 
 
