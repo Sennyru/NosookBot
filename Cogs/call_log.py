@@ -21,7 +21,6 @@ class CallLog(commands.Cog):
     
     CLOCK_ICONS = "🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦"
     MSG_DELETE_DELAY_MIN = 60
-    TIMEZONE = timezone("Asia/Seoul")
     
     
     def __init__(self, bot: NosookBot):
