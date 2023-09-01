@@ -38,9 +38,10 @@ class Core(commands.Cog):
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description=NosookBot.github, color=NosookBot.color)
-        embed.add_field(name="v0.6.1", value="""
-        * 1시간마다 타임라인 새로고침 중 오류가 발생할 경우 새로고침 task가 아예 중지되는 현상 수정
-                                                     """, inline=False)
+        embed.add_field(name="v0.6.2", value="""
+* `/타임라인` 사용 시 생각 중 표시
+* 통화 기록이 없으면 타임라인 색깔 설명을 표시하지 않음
+                        """, inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
                          icon_url=self.bot.get_user(self.bot.owner_ids[0]).avatar.url)

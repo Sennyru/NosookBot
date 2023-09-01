@@ -205,8 +205,9 @@ class CallLog(commands.Cog):
         
         # 임베드 생성
         embed = discord.Embed(title="타임라인", color=0x78b159)
+        icon_url = guild.icon.url if guild.icon else self.bot.user.display_avatar.url
+        
         if timeline:
-            
             # 옆쪽에 닉네임 표시
             members = []
             for id in map(int, timeline):
@@ -233,12 +234,12 @@ class CallLog(commands.Cog):
                 i = (i - 1) % 24
             
             embed.add_field(name=clock, value='\n'.join(''.join(reversed(value)) for value in timeline.values()))
+            embed.set_footer(text="🟩 통화 중  ⬛ 나감  ▪️ 알 수 없음", icon_url=icon_url)
             
         else:
             embed.description = "통화 기록이 없네요... :("
+            embed.set_footer(text="NosookBot", icon_url=icon_url)
         
-        icon_url = guild.icon.url if guild.icon else self.bot.user.display_avatar.url
-        embed.set_footer(text="🟩 통화 중  ⬛ 나감  ▪️ 알 수 없음",  icon_url=icon_url)
         embed.timestamp = datetime.now(NosookBot.timezone)
         return embed
     
