@@ -6,6 +6,7 @@ from nosookbot import NosookBot
 
 
 class Core(commands.Cog):
+    
     def __init__(self, bot: NosookBot):
         self.bot = bot
         self.log_channel: discord.TextChannel = None
@@ -68,9 +69,9 @@ class Core(commands.Cog):
         embed.timestamp = datetime.now(NosookBot.timezone)
         await ctx.respond(embed=embed, ephemeral=True)
         
-        await self.log_channel.send(f"{self.owner_mention} `/{ctx.command.name}` 실행 오류! 당장 로그를 확인하세요!")
+        await self.log_channel.send(f"{self.bot.owner_mention} `/{ctx.command.name}` 실행 오류! 당장 로그를 확인하세요!")
         NosookBot.log(f"/{ctx.command.name} 실행 오류! 아래 예외를 확인하세요.")
-        print(format_exc())
+        print(error)
     
 
 
