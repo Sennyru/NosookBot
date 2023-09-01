@@ -10,7 +10,6 @@ class NosookBot(discord.Bot):
     github = "https://github.com/Secon0101/NosookBot"
     color = 0x8fd26a
     timezone = timezone("Asia/Seoul")
-    cogs = []
     owner_mention = None
     
     
@@ -20,10 +19,10 @@ class NosookBot(discord.Bot):
         self.owner_mention = f"<@{self.owner_ids[0]}>"
         
         # Cogs/*.py cog 목록 가져오기
-        self.cogs = list(map(lambda cog: f"Cogs.{cog[:-3]}",
-                         filter(lambda file: file.endswith(".py"), listdir("Cogs"))))
-        self.cogs.sort(key=lambda cog: cog != "Cogs.core")
-        self.load_extensions(*self.cogs)
+        self.cog_names = list(map(lambda cog: f"Cogs.{cog[:-3]}",
+                                  filter(lambda file: file.endswith(".py"), listdir("Cogs"))))
+        self.cog_names.sort(key=lambda cog: cog != "Cogs.core")
+        self.load_extensions(*self.cog_names)
     
     @staticmethod
     def log(message):

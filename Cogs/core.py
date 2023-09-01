@@ -51,7 +51,7 @@ class Core(commands.Cog):
     @commands.is_owner()
     async def slash_reload(self, ctx: discord.ApplicationContext):
         NosookBot.log("리로드 중")
-        for cog in self.bot.cogs:
+        for cog in self.bot.cog_names:
             self.bot.reload_extension(cog)
         NosookBot.log("리로드 완료")
         await ctx.respond("🔄 봇을 리로드하였습니다.", ephemeral=True)
