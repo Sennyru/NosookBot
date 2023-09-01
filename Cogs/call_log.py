@@ -246,6 +246,7 @@ class CallLog(commands.Cog):
     @commands.slash_command(name="타임라인", description="통화 기록을 보여줍니다.")
     async def slash_show_timeline(self, ctx: discord.ApplicationContext, time_span: discord.Option(
         int, "최근 n시간의 기록 조회 (기간이 길 경우 임베드가 잘릴 수 있음)", min_value=1, max_value=24, default=12)):
+        await ctx.defer()
         await ctx.respond(embed=await self.make_timeline_embed(ctx.guild, time_span))
     
     
