@@ -167,6 +167,7 @@ class CallLog(commands.Cog):
         start = end - time_span * INTERVAL  # 타임라인 왼쪽 끝 시각
         call_log: dict[str, dict] = db.reference(f"call_log/{guild.id}").get() or {}
         timeline: dict[str, list] = {}  # 멤버별 타임라인 저장
+        has_unknown = False  # 알 수 없음 상태가 있는지 여부
         
         # 타임라인 생성
         for member_id, member_logs in call_log.items():
@@ -199,13 +200,16 @@ class CallLog(commands.Cog):
                 continue
             
             # 처음 액션까지 본 경우, 그 이전은 알 수 없기 때문에 빈칸으로 채움
-            while t > start:
-                timeline[member_id].append('▪️')
-                t -= INTERVAL
+            if t > start:
+                has_unknown = True
+                while t > start:
+                    timeline[member_id].append('▪️')
+                    t -= INTERVAL
         
         # 임베드 생성
         embed = discord.Embed(title="타임라인", color=0x78b159)
         icon_url = guild.icon.url if guild.icon else self.bot.user.display_avatar.url
+        timestamp = datetime.fromtimestamp(current, NosookBot.timezone)
         
         if timeline:
             # 옆쪽에 닉네임 표시
@@ -227,20 +231,21 @@ class CallLog(commands.Cog):
             embed.add_field(name="멤버", value='\n'.join(members))
             
             # 위쪽에 시간 표시
-            hour = datetime.fromtimestamp(current, NosookBot.timezone).hour
+            hour = timestamp.hour
             clock, i = "", hour
             for _ in range(time_span):
                 clock = CallLog.CLOCK_ICONS[i] + clock
                 i = (i - 1) % 24
-            
             embed.add_field(name=clock, value='\n'.join(''.join(reversed(value)) for value in timeline.values()))
-            embed.set_footer(text="🟩 통화 중  ⬛ 나감  ▪️ 알 수 없음", icon_url=icon_url)
+            
+            footer_text = "🟩 통화 중  ⬛ 나감  ▪️ 알 수 없음" if has_unknown else "🟩 통화 중  ⬛ 나감"
+            embed.set_footer(text=footer_text, icon_url=icon_url)
             
         else:
             embed.description = "통화 기록이 없네요... :("
             embed.set_footer(text="NosookBot", icon_url=icon_url)
         
-        embed.timestamp = datetime.fromtimestamp(current, NosookBot.timezone)
+        embed.timestamp = timestamp
         return embed
     
     
