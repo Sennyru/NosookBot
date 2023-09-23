@@ -173,9 +173,9 @@ class CallLog(commands.Cog):
             t = end
             for action_time, data in reversed(member_logs.items()):  # 최근 기록부터 과거로
                 
-                # 시간 내에 접속한 기록이 없으면 그 멤버는 표시하지 않음
                 if member_id not in timeline:
-                    if int(action_time) < start:
+                    # 시간 내에 접속한 기록이 없으면 그 멤버는 표시하지 않음
+                    if int(action_time) < start and data["status"] == Status.LEAVE.value:
                         break
                     
                     timeline[member_id] = []
@@ -240,7 +240,7 @@ class CallLog(commands.Cog):
             embed.description = "통화 기록이 없네요... :("
             embed.set_footer(text="NosookBot", icon_url=icon_url)
         
-        embed.timestamp = datetime.now(NosookBot.timezone)
+        embed.timestamp = datetime.fromtimestamp(current, NosookBot.timezone)
         return embed
     
     
