@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from datetime import datetime
-from traceback import format_exc
 from nosookbot import NosookBot
 
 
@@ -38,9 +37,9 @@ class Core(commands.Cog):
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description=NosookBot.github, color=NosookBot.color)
-        embed.add_field(name="v0.6.2", value="""
-* `/타임라인` 사용 시 생각 중 표시
-* 통화 기록이 없으면 타임라인 색깔 설명을 표시하지 않음
+        embed.add_field(name="v0.6.3", value="""
+* 13시간 이상 통화 중이면 타임라인에 표시되지 않는 오류 수정
+* '알 수 없음' 상태가 타임라인에 있을 때만 설명 표시
                         """, inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
