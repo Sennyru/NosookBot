@@ -62,7 +62,9 @@ class CallLog(commands.Cog):
         # 실시간 타임라인 업데이트
         NosookBot.log("실시간 타임라인 채널 초기화 중...")
         realtime_data: dict = db.reference("realtime_channel").get()
+        
         for guild_id in realtime_data:
+            # 길드 찾기
             guild = self.bot.get_guild(int(guild_id))
             if guild is None:
                 try:
@@ -71,6 +73,7 @@ class CallLog(commands.Cog):
                     NosookBot.log(f"서버 {guild_id}를 찾을 수 없습니다.")
                     continue
             
+            # 리얼타임 채널 찾기
             channel_id = realtime_data[guild_id]["channel"]
             channel = guild.get_channel(channel_id)
             if channel is None:
@@ -83,38 +86,17 @@ class CallLog(commands.Cog):
                     NosookBot.log(f"서버 {guild_id}의 타임라인 채널({channel_id})에 접근할 수 없습니다.")
                     continue
             
+            # 타임라인 업데이트
             await self.update_realtime_timeline(guild)
-            await CallLog.clear_other_messages(channel, realtime_data[guild_id]["message"])  # 채팅 클리어
-
+            
+            # 채팅 클리어
+            await CallLog.clear_other_messages(channel, realtime_data[guild_id]["message"])
+        
         NosookBot.log("초기화 완료")
     
     
-    @commands.Cog.listener()
-    async def on_voice_state_update(self, member: discord.Member,
-                                    before: discord.VoiceState, after: discord.VoiceState):
-        # on join
-        if before.channel is None and after.channel is not None:
-            await CallLog.update_call_log(member.id, Status.JOIN, after.channel)
-            await self.update_realtime_timeline(after.channel.guild)
-        
-        # on leave
-        elif before.channel is not None and after.channel is None:
-            await CallLog.update_call_log(member.id, Status.LEAVE, before.channel)
-            await self.update_realtime_timeline(before.channel.guild)
-    
-    
-    @staticmethod
-    async def update_call_log(user_id: int, status: Status, channel: discord.VoiceChannel):
-        """ 통화 기록을 데이터베이스에 저장한다. """
-        
-        db.reference(f"call_log/{channel.guild.id}/{user_id}/{int(time())}").update({
-            "status": status.value,
-            "channel": channel.id,
-        })
-    
-    
     async def update_realtime_timeline(self, guild: discord.Guild):
-        """ 서버의 타임라인을 만들고 업데이트한다. """
+        """ 서버의 실시간 타임라인 임베드를 새로 생성하고 업데이트한다. """
         
         if guild is None:
             return
@@ -150,14 +132,14 @@ class CallLog(commands.Cog):
         
         if message.author == self.bot.user:
             await message.add_reaction("🔄")
-            await message.edit(embed=await self.make_timeline_embed(guild))
+            await message.edit(embed=await self.create_timeline_embed(guild))
             NosookBot.log(f"서버 {guild.id} 타임라인 업데이트됨")
             await message.remove_reaction("🔄", self.bot.user)
         else:
             NosookBot.log(f"서버 {guild.id}의 타임라인 메시지({message_id})를 수정할 수 없습니다. 혹시 노숙봇이 아니신가요?")
     
     
-    async def make_timeline_embed(self, guild: discord.Guild, time_span=12) -> discord.Embed:
+    async def create_timeline_embed(self, guild: discord.Guild, time_span=12) -> discord.Embed:
         """ 실시간 타임라인 임베드를 생성한다. """
         
         INTERVAL = 60 * 60  # 1시간
@@ -249,11 +231,24 @@ class CallLog(commands.Cog):
         return embed
     
     
+    @staticmethod
+    async def clear_other_messages(channel: discord.TextChannel, timeline_id: int):
+        """ 실시간 타임라인 채널에서 타임라인 이외의 메시지를 모두 삭제한다. """
+        
+        if not channel.permissions_for(channel.guild.me).manage_messages:
+            NosookBot.log(f"서버 {channel.guild.id}의 메시지 삭제 권한이 없습니다.")
+            return
+        
+        async for message in channel.history(limit=None):
+            if message.id != timeline_id:
+                await message.delete()
+    
+    
     @commands.slash_command(name="타임라인", description="통화 기록을 보여줍니다.")
     async def slash_show_timeline(self, ctx: discord.ApplicationContext, time_span: discord.Option(
         int, "최근 n시간의 기록 조회 (기간이 길 경우 임베드가 잘릴 수 있음)", min_value=1, max_value=24, default=12)):
         await ctx.defer()
-        await ctx.respond(embed=await self.make_timeline_embed(ctx.guild, time_span))
+        await ctx.respond(embed=await self.create_timeline_embed(ctx.guild, time_span))
     
     
     @commands.has_permissions(manage_channels=True)
@@ -269,7 +264,7 @@ class CallLog(commands.Cog):
             async def button_yes(_, button: discord.ui.Button, interaction: discord.Interaction):
                 
                 # 실시간 타임라인 채널로 설정
-                timeline = await interaction.channel.send(embed=await self.make_timeline_embed(interaction.guild))
+                timeline = await interaction.channel.send(embed=await self.create_timeline_embed(interaction.guild))
                 db.reference(f"realtime_channel/{ctx.guild.id}").update({
                     "channel": ctx.channel.id,
                     "message": timeline.id
@@ -293,17 +288,31 @@ class CallLog(commands.Cog):
                                     view=Button(), ephemeral=True)
     
     
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member,
+                                    before: discord.VoiceState, after: discord.VoiceState):
+        # on join
+        if before.channel is None and after.channel is not None:
+            await CallLog.update_call_log(member.id, Status.JOIN, after.channel)
+            await self.update_realtime_timeline(after.channel.guild)
+
+        # on leave
+        elif before.channel is not None and after.channel is None:
+            await CallLog.update_call_log(member.id, Status.LEAVE, before.channel)
+            await self.update_realtime_timeline(before.channel.guild)
+    
+    
     @staticmethod
-    async def clear_other_messages(channel: discord.TextChannel, timeline_id: int):
-        """ 실시간 타임라인 채널에서 타임라인 이외의 메시지를 모두 삭제한다. """
+    async def update_call_log(user_id: int, status: Status, channel: discord.VoiceChannel, action_time: int = None):
+        """ 통화 기록을 데이터베이스에 저장한다. """
         
-        if not channel.permissions_for(channel.guild.me).manage_messages:
-            NosookBot.log(f"서버 {channel.guild.id}의 메시지 삭제 권한이 없습니다.")
-            return
+        if action_time is None:
+            action_time = int(time())
         
-        async for message in channel.history(limit=None):
-            if message.id != timeline_id:
-                await message.delete()
+        db.reference(f"call_log/{channel.guild.id}/{user_id}/{action_time}").update({
+            "status": status.value,
+            "channel": channel.id,
+        })
     
     
     @commands.Cog.listener()
