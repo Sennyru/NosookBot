@@ -13,9 +13,9 @@ class NosookBot(discord.Bot):
     owner_mention = None
     
     
-    def __init__(self, dev: bool, description=None, *args, **options):
+    def __init__(self, is_alpha_channel: bool, description=None, *args, **options):
         super().__init__(description, *args, **options)
-        self.dev = dev
+        self.release_channel = "alpha" if is_alpha_channel else "release"
         self.owner_mention = f"<@{self.owner_ids[0]}>"
         
         # Cogs/*.py cog 목록 가져오기
