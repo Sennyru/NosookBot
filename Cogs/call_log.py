@@ -30,10 +30,10 @@ class CallLog(commands.Cog):
         if firebase._apps:
             NosookBot.log("이미 파이어베이스에 연결됨")
             return
-
+        
         NosookBot.log("파이어베이스 연결 중...")
         fb_admin = "firebase-admin.json"
-
+        
         # 파일이 없거나 비어 있으면 생성
         need_to_create = False
         if not exists(fb_admin):
@@ -48,7 +48,7 @@ class CallLog(commands.Cog):
             with open(fb_admin, 'w') as f:
                 f.write(b64decode(getenv("FIREBASE_ADMIN_BASE64")).decode("utf-8"))
             NosookBot.log(f"{fb_admin} 생성 완료")
-
+        
         cred = firebase.credentials.Certificate(fb_admin)
         firebase.initialize_app(cred, {"databaseURL": getenv("DATABASE_URL")})
         NosookBot.log("파이어베이스 로드 완료")
@@ -61,7 +61,7 @@ class CallLog(commands.Cog):
         
         # 실시간 타임라인 업데이트
         NosookBot.log("실시간 타임라인 채널 초기화 중...")
-        realtime_data: dict = db.reference("realtime_channel").get()
+        realtime_data: dict = db.reference(f"{self.bot.release_channel}/realtime_channel").get()
         
         for guild_id in realtime_data:
             # 길드 찾기
@@ -101,7 +101,7 @@ class CallLog(commands.Cog):
         if guild is None:
             return
         
-        ref = db.reference(f"realtime_channel/{guild.id}")
+        ref = db.reference(f"{self.bot.release_channel}/realtime_channel/{guild.id}")
         realtime_data: dict = ref.get()
         if realtime_data is None:
             return
@@ -147,7 +147,7 @@ class CallLog(commands.Cog):
         current = int(time())
         end = current - current % INTERVAL + INTERVAL  # 타임라인 오른쪽 끝 시각
         start = end - time_span * INTERVAL  # 타임라인 왼쪽 끝 시각
-        call_log: dict[str, dict] = db.reference(f"call_log/{guild.id}").get() or {}
+        call_log: dict[str, dict] = db.reference(f"{self.bot.release_channel}/call_log/{guild.id}").get() or {}
         timeline: dict[str, list] = {}  # 멤버별 타임라인 저장
         has_unknown = False  # 알 수 없음 상태가 있는지 여부
         
@@ -254,7 +254,7 @@ class CallLog(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.slash_command(name="리얼타임", description="해당 채널을 실시간 타임라인이 뜨는 채널로 설정합니다.")
     async def slash_set_realtime_channel(self, ctx: discord.ApplicationContext):
-        channel_id = db.reference(f"realtime_channel/{ctx.guild.id}/channel").get()
+        channel_id = db.reference(f"{self.bot.release_channel}/realtime_channel/{ctx.guild.id}/channel").get()
         if channel_id == ctx.channel.id:
             await ctx.respond("이미 실시간 타임라인 채널로 설정되어 있습니다.", ephemeral=True)
             return
@@ -265,7 +265,7 @@ class CallLog(commands.Cog):
                 
                 # 실시간 타임라인 채널로 설정
                 timeline = await interaction.channel.send(embed=await self.create_timeline_embed(interaction.guild))
-                db.reference(f"realtime_channel/{ctx.guild.id}").update({
+                db.reference(f"{self.bot.release_channel}/realtime_channel/{ctx.guild.id}").update({
                     "channel": ctx.channel.id,
                     "message": timeline.id
                 })
@@ -293,23 +293,23 @@ class CallLog(commands.Cog):
                                     before: discord.VoiceState, after: discord.VoiceState):
         # on join
         if before.channel is None and after.channel is not None:
-            await CallLog.update_call_log(member.id, Status.JOIN, after.channel)
+            await self.update_call_log(member.id, Status.JOIN, after.channel)
             await self.update_realtime_timeline(after.channel.guild)
 
         # on leave
         elif before.channel is not None and after.channel is None:
-            await CallLog.update_call_log(member.id, Status.LEAVE, before.channel)
+            await self.update_call_log(member.id, Status.LEAVE, before.channel)
             await self.update_realtime_timeline(before.channel.guild)
     
     
-    @staticmethod
-    async def update_call_log(user_id: int, status: Status, channel: discord.VoiceChannel, action_time: int = None):
+    async def update_call_log(self, user_id: int, status: Status, channel: discord.VoiceChannel,
+                              action_time: int = None):
         """ 통화 기록을 데이터베이스에 저장한다. """
         
         if action_time is None:
             action_time = int(time())
         
-        db.reference(f"call_log/{channel.guild.id}/{user_id}/{action_time}").update({
+        db.reference(f"{self.bot.release_channel}/call_log/{channel.guild.id}/{user_id}/{action_time}").update({
             "status": status.value,
             "channel": channel.id,
         })
@@ -321,7 +321,7 @@ class CallLog(commands.Cog):
             return
         
         # 실시간 타임라인 채널에 올라오는 메시지는 일정 시간 뒤에 삭제
-        channel_data = db.reference(f"realtime_channel/{message.guild.id}").get()
+        channel_data = db.reference(f"{self.bot.release_channel}/realtime_channel/{message.guild.id}").get()
         if channel_data is None:
             return
         if not message.channel.id == channel_data["channel"]:
@@ -345,7 +345,7 @@ class CallLog(commands.Cog):
                 return
 
             NosookBot.log(f"{now.hour}시 정각! 타임라인 업데이트 중...")
-            for guild_id in db.reference("realtime_channel").get():
+            for guild_id in db.reference(f"{self.bot.release_channel}/realtime_channel").get():
                 try:
                     guild = self.bot.get_guild(int(guild_id)) or await self.bot.fetch_guild(int(guild_id))
                 except discord.errors.NotFound:
