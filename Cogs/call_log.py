@@ -61,7 +61,7 @@ class CallLog(commands.Cog):
         
         # 실시간 타임라인 업데이트
         NosookBot.log("실시간 타임라인 채널 초기화 중...")
-        realtime_data: dict = db.reference(f"{self.bot.release_channel}/realtime_channel").get()
+        realtime_data: dict = db.reference(f"{self.bot.release_channel}/realtime_channel").get() or {}
         
         for guild_id in realtime_data:
             # 길드 찾기
