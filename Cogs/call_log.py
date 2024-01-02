@@ -139,11 +139,13 @@ class CallLog(commands.Cog):
             NosookBot.log(f"서버 {guild.id}의 타임라인 메시지({message_id})를 수정할 수 없습니다. 혹시 노숙봇이 아니신가요?")
     
     
-    async def create_timeline_embed(self, guild: discord.Guild, time_span = 12, current = int(time())) -> discord.Embed:
+    async def create_timeline_embed(self, guild: discord.Guild, time_span=12, current=None) -> discord.Embed:
         """ 실시간 타임라인 임베드를 생성한다. """
         
         INTERVAL = 60 * 60  # 1시간
         
+        if current is None:
+            current = int(time())
         end = current - current % INTERVAL + INTERVAL  # 타임라인 오른쪽 끝 시각
         start = end - time_span * INTERVAL  # 타임라인 왼쪽 끝 시각
         call_log: dict[str, dict] = db.reference(f"{self.bot.release_channel}/call_log/{guild.id}").get() or {}
@@ -302,8 +304,11 @@ class CallLog(commands.Cog):
             await self.update_realtime_timeline(before.channel.guild)
     
     
-    async def update_call_log(self, user_id: int, status: Status, channel: discord.VoiceChannel, action_time = int(time())):
+    async def update_call_log(self, user_id: int, status: Status, channel: discord.VoiceChannel, action_time=None):
         """ 통화 기록을 데이터베이스에 저장한다. """
+        
+        if action_time is None:
+            action_time = int(time())
         
         db.reference(f"{self.bot.release_channel}/call_log/{channel.guild.id}/{user_id}/{action_time}").update({
             "status": status.value,
