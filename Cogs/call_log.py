@@ -74,7 +74,7 @@ class CallLog(commands.Cog):
                     continue
             
             # 리얼타임 채널 찾기
-            channel_id = realtime_data[guild_id]["channel"]
+            channel_id = int(realtime_data[guild_id]["channel"])
             channel = guild.get_channel(channel_id)
             if channel is None:
                 try:
@@ -90,7 +90,7 @@ class CallLog(commands.Cog):
             await self.update_realtime_timeline(guild)
             
             # 채팅 클리어
-            await CallLog.clear_other_messages(channel, realtime_data[guild_id]["message"])
+            await CallLog.clear_other_messages(channel, int(realtime_data[guild_id]["message"]))
         
         NosookBot.log("초기화 완료")
     
@@ -106,7 +106,7 @@ class CallLog(commands.Cog):
         if realtime_data is None:
             return
         
-        channel_id = realtime_data["channel"]
+        channel_id = int(realtime_data["channel"])
         realtime_channel = self.bot.get_channel(channel_id)
         if realtime_channel is None:
             try:
@@ -118,11 +118,11 @@ class CallLog(commands.Cog):
                 NosookBot.log(f"서버 {guild.id}의 타임라인 채널({channel_id})에 접근할 수 없습니다.")
                 return
         
-        message_id = realtime_data["message"]
+        message_id = int(realtime_data["message"])
         message = self.bot.get_message(message_id)
         if message is None:
             try:
-                message = await realtime_channel.fetch_message(realtime_data["message"])
+                message = await realtime_channel.fetch_message(message_id)
             except discord.errors.NotFound:
                 NosookBot.log(f"서버 {guild.id}의 타임라인 메시지({message_id})를 찾을 수 없습니다.")
                 return
@@ -254,6 +254,7 @@ class CallLog(commands.Cog):
     @commands.slash_command(name="리얼타임", description="해당 채널을 실시간 타임라인이 뜨는 채널로 설정합니다.")
     async def slash_set_realtime_channel(self, ctx: discord.ApplicationContext):
         channel_id = db.reference(f"{self.bot.release_channel}/realtime_channel/{ctx.guild.id}/channel").get()
+        channel_id = int(channel_id)
         if channel_id == ctx.channel.id:
             await ctx.respond("이미 실시간 타임라인 채널로 설정되어 있습니다.", ephemeral=True)
             return
@@ -265,8 +266,8 @@ class CallLog(commands.Cog):
                 # 실시간 타임라인 채널로 설정
                 timeline = await interaction.channel.send(embed=await self.create_timeline_embed(interaction.guild))
                 db.reference(f"{self.bot.release_channel}/realtime_channel/{ctx.guild.id}").update({
-                    "channel": ctx.channel.id,
-                    "message": timeline.id
+                    "channel": str(ctx.channel.id),
+                    "message": str(timeline.id)
                 })
                 await confirm.edit_original_response(content="채널을 **실시간 타임라인 채널**로 설정했습니다!", view=None)
                 
@@ -306,7 +307,7 @@ class CallLog(commands.Cog):
         
         db.reference(f"{self.bot.release_channel}/call_log/{channel.guild.id}/{user_id}/{action_time}").update({
             "status": status.value,
-            "channel": channel.id,
+            "channel": str(channel.id),
         })
     
     
@@ -319,11 +320,11 @@ class CallLog(commands.Cog):
         channel_data = db.reference(f"{self.bot.release_channel}/realtime_channel/{message.guild.id}").get()
         if channel_data is None:
             return
-        if not message.channel.id == channel_data["channel"]:
+        if not message.channel.id == int(channel_data["channel"]):
             return
         if not message.channel.permissions_for(message.guild.me).manage_messages:
             return
-        if message.id == channel_data["message"]:
+        if message.id == int(channel_data["message"]):
             return
         
         await message.delete(delay=CallLog.MSG_DELETE_DELAY_MIN * 60, reason="실시간 타임라인 채널 메시지 삭제")
