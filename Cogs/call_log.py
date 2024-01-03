@@ -256,8 +256,7 @@ class CallLog(commands.Cog):
     @commands.slash_command(name="리얼타임", description="해당 채널을 실시간 타임라인이 뜨는 채널로 설정합니다.")
     async def slash_set_realtime_channel(self, ctx: discord.ApplicationContext):
         channel_id = db.reference(f"{self.bot.release_channel}/realtime_channel/{ctx.guild.id}/channel").get()
-        channel_id = int(channel_id)
-        if channel_id == ctx.channel.id:
+        if channel_id == str(ctx.channel.id):
             await ctx.respond("이미 실시간 타임라인 채널로 설정되어 있습니다.", ephemeral=True)
             return
         
