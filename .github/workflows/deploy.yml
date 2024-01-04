@@ -1,0 +1,63 @@
+name: NosookBot
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  VERSION: ${{ github.sha }}
+  DOCKER_IMAGE: ghcr.io/secon0101/nosookbot
+  NAME: nosookbot
+
+jobs:
+  build:
+    name: Build
+    runs-on: [ self-hosted, server ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up docker buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Cache docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ env.VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: Login to ghcr
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: secon0101
+          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: ${{ env.DOCKER_IMAGE }}:latest
+  deploy:
+    needs: build
+    name: Deploy
+    runs-on: [ self-hosted, server ]
+    steps:
+      - name: Login to ghcr
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: secon0101
+          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Setting .env
+        run: |
+          echo "TOKEN=${{ secrets.BOT_TOKEN }}" >> .env
+          echo "FIREBASE_ADMIN_BASE64=${{ secrets.FIREBASE_ADMIN_BASE64 }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+      - name: Docker run
+        run: |
+          docker stop ${{ env.NAME }} && docker rm ${{ env.NAME }} && docker rmi ${{ env.DOCKER_IMAGE }}:latest
+          docker run -d --env-file=.env --name ${{ env.NAME }} --restart always ${{ env.DOCKER_IMAGE }}:latest
+      - name: Remove .env file
+        run: |
+          rm -rf .env
