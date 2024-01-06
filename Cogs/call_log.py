@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from enum import Enum
-from os import getenv
+from os import environ
 from os.path import exists
 from base64 import b64decode
 import firebase_admin as firebase
@@ -46,11 +46,13 @@ class CallLog(commands.Cog):
                     NosookBot.log(f"{fb_admin} 파일 비어있음. 생성 중...")
         if need_to_create:
             with open(fb_admin, 'w') as f:
-                f.write(b64decode(getenv("FIREBASE_ADMIN_BASE64")).decode("utf-8"))
+                fb_admin_base64 = environ["FIREBASE_ADMIN_BASE64"]
+                f.write(b64decode(fb_admin_base64).decode("utf-8"))
             NosookBot.log(f"{fb_admin} 생성 완료")
         
         cred = firebase.credentials.Certificate(fb_admin)
-        firebase.initialize_app(cred, {"databaseURL": getenv("DATABASE_URL")})
+        database_url = environ["DATABASE_URL"]
+        firebase.initialize_app(cred, {"databaseURL": database_url})
         NosookBot.log("파이어베이스 로드 완료")
     
     
@@ -321,7 +323,7 @@ class CallLog(commands.Cog):
             return
         
         # 실시간 타임라인 채널에 올라오는 메시지는 일정 시간 뒤에 삭제
-        channel_data = db.reference(f"{self.bot.release_channel}/realtime_channel/{message.guild.id}").get()
+        channel_data = db.reference(f"{self.bot.release_channel}/realtime_channel/{message.guild.id}").get() or {}
         if channel_data is None:
             return
         if not message.channel.id == int(channel_data["channel"]):
