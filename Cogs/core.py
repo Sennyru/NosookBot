@@ -13,7 +13,7 @@ class Core(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
-        log_channel_id = 1138430000442384454
+        log_channel_id = 1138430000442384454 if self.bot.release_channel == "release" else 1194318699633577994
         self.log_channel = self.bot.get_channel(log_channel_id) or await self.bot.fetch_channel(log_channel_id)
         
         await self.bot.change_presence(activity=discord.Game(name="노숙"))
