@@ -37,9 +37,8 @@ class Core(commands.Cog):
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description=NosookBot.github, color=NosookBot.color)
-        embed.add_field(name="v0.6.3", value="""
-* 13시간 이상 통화 중이면 타임라인에 표시되지 않는 오류 수정
-* '알 수 없음' 상태가 타임라인에 있을 때만 설명 표시
+        embed.add_field(name="v0.7", value="""
+* AFK 상태일 때는 주황색으로 표시
                         """, inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
