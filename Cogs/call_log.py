@@ -15,6 +15,7 @@ from nosookbot import NosookBot
 class Status(Enum):
     JOIN = 1
     LEAVE = 0
+    AFK = 2
 
 
 class CallLog(commands.Cog):
@@ -154,6 +155,10 @@ class CallLog(commands.Cog):
         timeline: dict[str, list] = {}  # 멤버별 타임라인 저장
         has_unknown = False  # 알 수 없음 상태가 있는지 여부
         
+        # 뒤에 나올, 채우는 조건에 대한 식
+        with_current = lambda: t > int(action_time)  # 현재 칸 포함
+        without_current = lambda: t - INTERVAL > int(action_time)  # 현재 칸 제외
+        
         # 타임라인 생성
         for member_id, member_logs in call_log.items():
             t = end
@@ -166,16 +171,20 @@ class CallLog(commands.Cog):
                     
                     timeline[member_id] = []
                 
-                # 그 시간의 상태 채우기
-                match data["status"]:
-                    case Status.JOIN.value:  # 들어간 시각부터 입장 상태로 표시
-                        while t > int(action_time) and t > start:
-                            timeline[member_id].append('🟩')
-                            t -= INTERVAL
-                    case Status.LEAVE.value:  # 나간 다음 시각부터 퇴장 상태로 표시
-                        while t - INTERVAL > int(action_time) and t > start:
-                            timeline[member_id].append('⬛')
-                            t -= INTERVAL
+                # 상태 및 채우는 조건 설정
+                icon, check = '▪️', without_current  # (기본값인데 무조건 수정됨)
+                match data["status"]:  # (파이썬 3.10 이하는 수정 필요!!)
+                    case Status.JOIN.value:
+                        icon, check = '🟩', with_current
+                    case Status.LEAVE.value:
+                        icon, check = '⬛', without_current
+                    case Status.AFK.value:
+                        icon, check = '🟧', without_current
+                
+                # 현재 기록과 이후 기록 사이를 한 칸씩 채우기
+                while check() and t > start:
+                    timeline[member_id].append(icon)
+                    t -= INTERVAL
                 
                 # 타임라인 왼쪽 끝에 도달하면 멈춤
                 if t <= start:
@@ -294,15 +303,36 @@ class CallLog(commands.Cog):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member,
                                     before: discord.VoiceState, after: discord.VoiceState):
+        # 채널이 바뀐 경우만 처리
+        # 이론상 서버가 다르지는 않음
+        if before.channel == after.channel:
+            return
+        
+        # 이론상 불가능
+        if before.channel is None and after.channel is None:
+            return
+        
         # on join
-        if before.channel is None and after.channel is not None:
+        elif before.channel is None and after.channel is not None:
             await self.update_call_log(member.id, Status.JOIN, after.channel)
             await self.update_realtime_timeline(after.channel.guild)
-
+        
         # on leave
         elif before.channel is not None and after.channel is None:
             await self.update_call_log(member.id, Status.LEAVE, before.channel)
             await self.update_realtime_timeline(before.channel.guild)
+        
+        # on move channel
+        else:
+            print("move")
+            if after.afk:  # afk로 이동
+                await self.update_call_log(member.id, Status.AFK, after.channel)
+                await self.update_realtime_timeline(after.channel.guild)
+                print("after afk")
+            elif before.afk:  # afk 해제
+                await self.update_call_log(member.id, Status.JOIN, after.channel)
+                await self.update_realtime_timeline(after.channel.guild)
+                print("before afk")
     
     
     async def update_call_log(self, user_id: int, status: Status, channel: discord.VoiceChannel, action_time=None):
