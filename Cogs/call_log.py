@@ -153,11 +153,9 @@ class CallLog(commands.Cog):
         start = end - time_span * INTERVAL  # 타임라인 왼쪽 끝 시각
         call_log: dict[str, dict] = db.reference(f"{self.bot.release_channel}/call_log/{guild.id}").get() or {}
         timeline: dict[str, list] = {}  # 멤버별 타임라인 저장
-        has_unknown = False  # 알 수 없음 상태가 있는지 여부
         
-        # 뒤에 나올, 채우는 조건에 대한 식
-        with_current = lambda: t > int(action_time)  # 현재 칸 포함
-        without_current = lambda: t - INTERVAL > int(action_time)  # 현재 칸 제외
+        has_unknown = False  # 알 수 없음 상태가 있는지 여부
+        has_afk = False  # afk 상태가 있는지 여부
         
         # 타임라인 생성
         for member_id, member_logs in call_log.items():
@@ -171,20 +169,21 @@ class CallLog(commands.Cog):
                     
                     timeline[member_id] = []
                 
-                # 상태 및 채우는 조건 설정
-                icon, check = '▪️', without_current  # (기본값인데 무조건 수정됨)
+                # 현재 기록과 이후 기록 사이를 한 칸씩 채우기
                 match data["status"]:  # (파이썬 3.10 이하는 수정 필요!!)
                     case Status.JOIN.value:
-                        icon, check = '🟩', with_current
+                        while t > int(action_time) and t > start:  # 현재 칸 포함
+                            timeline[member_id].append('🟩')
+                            t -= INTERVAL
                     case Status.LEAVE.value:
-                        icon, check = '⬛', without_current
+                        while t - INTERVAL > int(action_time) and t > start:  # 현재 칸 제외
+                            timeline[member_id].append('⬛')
+                            t -= INTERVAL
                     case Status.AFK.value:
-                        icon, check = '🟧', without_current
-                
-                # 현재 기록과 이후 기록 사이를 한 칸씩 채우기
-                while check() and t > start:
-                    timeline[member_id].append(icon)
-                    t -= INTERVAL
+                        while t - INTERVAL > int(action_time) and t > start:  # 현재 칸 제외
+                            timeline[member_id].append('🟧')
+                            t -= INTERVAL
+                            has_afk = True
                 
                 # 타임라인 왼쪽 끝에 도달하면 멈춤
                 if t <= start:
@@ -232,7 +231,9 @@ class CallLog(commands.Cog):
                 i = (i - 1) % 24
             embed.add_field(name=clock, value='\n'.join(''.join(reversed(value)) for value in timeline.values()))
             
-            footer_text = "🟩 통화 중  ⬛ 나감  ▪️ 알 수 없음" if has_unknown else "🟩 통화 중  ⬛ 나감"
+            footer_text = "🟩 통화 중  ⬛ 나감"
+            if has_afk: footer_text += " 🟧 잠수"
+            if has_unknown: footer_text += " ▪️ 알 수 없음"
             embed.set_footer(text=footer_text, icon_url=icon_url)
             
         else:
