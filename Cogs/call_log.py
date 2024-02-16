@@ -325,15 +325,12 @@ class CallLog(commands.Cog):
         
         # on move channel
         else:
-            print("move")
             if after.afk:  # afk로 이동
                 await self.update_call_log(member.id, Status.AFK, after.channel)
                 await self.update_realtime_timeline(after.channel.guild)
-                print("after afk")
             elif before.afk:  # afk 해제
                 await self.update_call_log(member.id, Status.JOIN, after.channel)
                 await self.update_realtime_timeline(after.channel.guild)
-                print("before afk")
     
     
     async def update_call_log(self, user_id: int, status: Status, channel: discord.VoiceChannel, action_time=None):
