@@ -6,7 +6,7 @@ on:
 
 env:
   VERSION: ${{ github.sha }}
-  DOCKER_IMAGE: ghcr.io/sennyru/nosookbot:latest
+  DOCKER_IMAGE: ghcr.io/sennyru/nosookbot
   NAME: nosookbot
 
 jobs:
