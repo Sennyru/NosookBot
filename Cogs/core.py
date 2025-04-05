@@ -40,6 +40,9 @@ class Core(commands.Cog):
         embed.add_field(name="v0.7", value="""
 * AFK 상태일 때는 주황색으로 표시
                         """, inline=False)
+        embed.add_field(name="v0.7.1", value="""
+* 타임라인 업데이트가 안 되는 버그 수정
+                        """, inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
                          icon_url=self.bot.get_user(self.bot.owner_ids[0]).avatar.url)

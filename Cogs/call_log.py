@@ -355,7 +355,7 @@ class CallLog(commands.Cog):
         
         # 실시간 타임라인 채널에 올라오는 메시지는 일정 시간 뒤에 삭제
         channel_data = db.reference(f"{self.bot.release_channel}/realtime_channel/{message.guild.id}").get() or {}
-        if channel_data is None:
+        if not channel_data:
             return
         if not message.channel.id == int(channel_data["channel"]):
             return
