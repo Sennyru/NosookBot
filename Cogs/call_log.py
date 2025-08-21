@@ -207,19 +207,18 @@ class CallLog(commands.Cog):
         if timeline:
             # 옆쪽에 닉네임 표시
             members = []
+            nick = lambda name, display_name: f"{display_name} `{name}`" if name != display_name else f"`{name}`"
+            
             for id in map(int, timeline):
                 try:
                     member = guild.get_member(id) or await guild.fetch_member(id)
                     
                 except discord.HTTPException:  # 서버에 멤버가 없으면
                     user = await self.bot.get_or_fetch_user(id)
-                    members.append(f"{user.display_name}")
+                    members.append(nick(user.name, user.display_name))
                     
                 else:
-                    if member.name != member.display_name:
-                        members.append(f"{member.display_name} ({member.name})")
-                    else:
-                        members.append(member.name)
+                    members.append(nick(member.name, member.display_name))
             
             embed.add_field(name="멤버", value='\n'.join(members))
             

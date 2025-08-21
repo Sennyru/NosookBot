@@ -37,12 +37,7 @@ class Core(commands.Cog):
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description=NosookBot.github, color=NosookBot.color)
-        embed.add_field(name="v0.7", value="""
-* AFK 상태일 때는 주황색으로 표시
-                        """, inline=False)
-        embed.add_field(name="v0.7.1", value="""
-* 타임라인 업데이트가 안 되는 버그 수정
-                        """, inline=False)
+        embed.add_field(name="v0.7.2", value="타임라인의 사용자 아이디를 `고정폭 텍스트`로 표시", inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
                          icon_url=self.bot.get_user(self.bot.owner_ids[0]).avatar.url)
