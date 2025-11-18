@@ -220,16 +220,20 @@ class CallLog(commands.Cog):
                 else:
                     members.append(nick(member.name, member.display_name))
             
-            embed.add_field(name="멤버", value='\n'.join(members))
-            
             # 위쪽에 시간 표시
             hour = timestamp.hour
             clock, i = "", hour
             for _ in range(time_span):
                 clock = CallLog.CLOCK_ICONS[i] + clock
                 i = (i - 1) % 24
-            embed.add_field(name=clock, value='\n'.join(''.join(reversed(value)) for value in timeline.values()))
             
+            # 타임라인과 닉네임을 합쳐서 필드에 추가
+            field = []
+            for t, m in zip(timeline.values(), members):
+                field.append(f"{''.join(reversed(t))}　{m}")
+            embed.add_field(name=clock, value='\n'.join(field))
+            
+            # footer
             footer_text = "🟩 통화 중  ⬛ 나감"
             if has_afk: footer_text += " 🟧 잠수"
             if has_unknown: footer_text += " ▪️ 알 수 없음"
