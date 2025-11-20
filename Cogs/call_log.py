@@ -230,7 +230,7 @@ class CallLog(commands.Cog):
             # 타임라인과 닉네임을 합쳐서 필드에 추가
             field = []
             for t, m in zip(timeline.values(), members):
-                field.append(f"{''.join(reversed(t))}　{m}")
+                field.append(f"{''.join(reversed(t))} {m}")
             embed.add_field(name=clock, value='\n'.join(field))
             
             # footer

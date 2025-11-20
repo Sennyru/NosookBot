@@ -37,7 +37,7 @@ class Core(commands.Cog):
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
         embed = discord.Embed(title="🟢 노숙봇", description=NosookBot.github, color=NosookBot.color)
-        embed.add_field(name="v0.8", value="- 타임 테이블과 닉네임 위치를 서로 바꿈\n- 수평 정렬이 안 맞는 문제 수정", inline=False)
+        embed.add_field(name="v0.8.1", value="- 타임 테이블과 닉네임 위치를 서로 바꿈\n- 수평 정렬이 안 맞는 문제 수정", inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
                          icon_url=self.bot.get_user(self.bot.owner_ids[0]).avatar.url)
