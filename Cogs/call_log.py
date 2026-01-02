@@ -20,7 +20,8 @@ class Status(Enum):
 
 class CallLog(commands.Cog):
     
-    CLOCK_ICONS = "🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦"
+    # CLOCK_ICONS = ['<:12:1456550818630336694>', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '<:11:1456550802897506334>', '<:12:1456550818630336694>', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '<:11:1456550802897506334>']
+    CLOCK_ICONS = ['<:12:1456555755921473649>', '<:01:1456555005166354603>', '<:02:1456555007254990918>', '<:03:1456555009838682164>', '<:04:1456555012082897111>', '<:05:1456555014695686256>', '<:06:1456555016981577849>', '<:07:1456555018453782529>', '<:08:1456555019947085977>', '<:09:1456555021578666024>', '<:10:1456555757750194353>', '<:11:1456555760728277124>', '<:12:1456555755921473649>', '<:01:1456555005166354603>', '<:02:1456555007254990918>', '<:03:1456555009838682164>', '<:04:1456555012082897111>', '<:05:1456555014695686256>', '<:06:1456555016981577849>', '<:07:1456555018453782529>', '<:08:1456555019947085977>', '<:09:1456555021578666024>', '<:10:1456555757750194353>', '<:11:1456555760728277124>']
     MSG_DELETE_DELAY_MIN = 60
     
     
@@ -200,7 +201,7 @@ class CallLog(commands.Cog):
                     t -= INTERVAL
         
         # 임베드 생성
-        embed = discord.Embed(title="타임라인", color=0x78b159)
+        embed = discord.Embed(color=0x78b159)
         icon_url = guild.icon.url if guild.icon else self.bot.user.display_avatar.url
         timestamp = datetime.fromtimestamp(current, NosookBot.timezone)
         
@@ -228,10 +229,10 @@ class CallLog(commands.Cog):
                 i = (i - 1) % 24
             
             # 타임라인과 닉네임을 합쳐서 필드에 추가
-            field = []
+            field = [clock]
             for t, m in zip(timeline.values(), members):
                 field.append(f"{''.join(reversed(t))} {m}")
-            embed.add_field(name=clock, value='\n'.join(field))
+            embed.add_field(name="타임라인", value='\n'.join(field))
             
             # footer
             footer_text = "🟩 통화 중  ⬛ 나감"
@@ -240,7 +241,7 @@ class CallLog(commands.Cog):
             embed.set_footer(text=footer_text, icon_url=icon_url)
             
         else:
-            embed.description = "통화 기록이 없네요... :("
+            embed.add_field(name="타임라인", value="통화 기록이 없네요... :(")
             embed.set_footer(text="NosookBot", icon_url=icon_url)
         
         embed.timestamp = timestamp
