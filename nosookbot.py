@@ -7,7 +7,7 @@ from datetime import datetime
 class NosookBot(discord.Bot):
     """ discord.Bot 확장 클래스 """
     
-    github = "https://github.com/Secon0101/NosookBot"
+    github = "https://github.com/Sennyru/NosookBot"
     color = 0x8fd26a
     timezone = timezone("Asia/Seoul")
     owner_mention = None
