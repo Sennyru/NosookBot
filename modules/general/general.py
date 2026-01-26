@@ -4,7 +4,7 @@ from datetime import datetime
 from nosookbot import NosookBot
 
 
-class Core(commands.Cog):
+class General(commands.Cog):
     
     def __init__(self, bot: NosookBot):
         self.bot = bot
@@ -74,4 +74,4 @@ class Core(commands.Cog):
 
 @NosookBot.cog_logger
 def setup(bot: NosookBot):
-    bot.add_cog(Core(bot))
+    bot.add_cog(General(bot))

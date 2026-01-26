@@ -1,5 +1,4 @@
 import discord
-from os import listdir
 from pytz import timezone
 from datetime import datetime
 
@@ -13,15 +12,13 @@ class NosookBot(discord.Bot):
     owner_mention = None
     
     
-    def __init__(self, is_alpha_channel: bool, description=None, *args, **options):
+    def __init__(self, is_alpha_channel: bool, cog_names: list, description=None, *args, **options):
         super().__init__(description, *args, **options)
         self.release_channel = "alpha" if is_alpha_channel else "release"
         self.owner_mention = f"<@{self.owner_ids[0]}>"
         
-        # Cogs/*.py cog 목록 가져오기
-        self.cog_names = list(map(lambda cog: f"Cogs.{cog[:-3]}",
-                                  filter(lambda file: file.endswith(".py"), listdir("Cogs"))))
-        self.cog_names.sort(key=lambda cog: cog != "Cogs.core")
+        # load cogs
+        self.cog_names = cog_names
         self.load_extensions(*self.cog_names)
     
     @staticmethod
@@ -47,4 +44,3 @@ class NosookBot(discord.Bot):
                 NosookBot.log(f"{cog_name} 로드 완료")
         
         return wrapper
-    
