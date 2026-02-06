@@ -43,11 +43,19 @@ class General(commands.Cog):
     
     @commands.slash_command(name="노숙봇", description="봇 정보를 표시합니다.")
     async def slash_info(self, ctx: discord.ApplicationContext):
+        # 업데이트 정보 읽기
+        info_file_path = f"{__package__.replace('.', '/')}/update_info.md"
+        with open(info_file_path, encoding="utf-8") as f:
+            version = f.readline().rstrip()
+            details = f.read().rstrip()
+        
+        owner = self.bot.get_user(self.bot.owner_ids[0])
+        
         embed = discord.Embed(title="🟢 노숙봇", description=NosookBot.github, color=NosookBot.color)
-        embed.add_field(name="v0.9", value="- 시계 이모지 대신 숫자 이모지 사용", inline=False)
+        embed.add_field(name=version, value=details, inline=False)
         embed.set_thumbnail(url=self.bot.user.display_avatar)
-        embed.set_footer(text=f"Made by {self.bot.get_user(self.bot.owner_ids[0]).display_name}",
-                         icon_url=self.bot.get_user(self.bot.owner_ids[0]).avatar)
+        embed.set_footer(text=f"Made by {owner.display_name}", icon_url=owner.display_avatar)
+        
         await ctx.respond(embed=embed)
     
     
