@@ -9,8 +9,14 @@ class DB(discord.Cog):
     def __init__(self, bot: NosookBot):
         self.bot = bot
         
+        # 파이어베이스 Cog 불러오기
         bot.load_extension(FirebaseDB.__module__)
         self.firebase: FirebaseDB = bot.get_cog(FirebaseDB.__name__)
+        
+        self.initialize()
+    
+    def cog_unload(self):
+        self.bot.unload_extension(FirebaseDB.__module__)
     
     
     def initialize(self):

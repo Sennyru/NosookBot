@@ -1,6 +1,7 @@
 import discord
 from pytz import timezone
 from datetime import datetime
+from traceback import format_exc
 
 
 class NosookBot(discord.Bot):
@@ -21,6 +22,7 @@ class NosookBot(discord.Bot):
         self.cog_names = cog_names
         self.load_extensions(*self.cog_names)
     
+    
     @staticmethod
     def log(message):
         """ 로그를 콘솔에 출력한다. """
@@ -37,9 +39,9 @@ class NosookBot(discord.Bot):
             NosookBot.log(f"{cog_name} 로드 중...")
             try:
                 setup(bot)
-            except Exception as error:
+            except:
                 NosookBot.log(f"{cog_name} 로드 실패! 아래 예외를 확인하세요.")
-                NosookBot.log(error)
+                print(format_exc())
             else:
                 NosookBot.log(f"{cog_name} 로드 완료")
         
