@@ -26,8 +26,6 @@ class General(commands.Cog):
         guild_count = len(self.bot.guilds)
         NosookBot.log(f"{self.bot.user.display_name} 온라인! (서버 {guild_count}개)")
         await self.send_to_log_channel(f"온라인! (서버 {guild_count}개)")
-        
-        print("on_ready")
     
     
     @commands.Cog.listener()
