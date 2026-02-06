@@ -5,7 +5,7 @@ from datetime import datetime
 from time import time
 from traceback import format_exc
 from nosookbot import NosookBot
-from ..db.repository import Repository
+from ..db.db import DB
 
 
 class Status(Enum):
@@ -22,9 +22,9 @@ class CallLog(commands.Cog):
     
     def __init__(self, bot: NosookBot):
         self.bot = bot
-        self.db: Repository = bot.get_cog("Repository")
         
         # DB 로드
+        self.db: DB = bot.get_cog(DB.__name__)
         self.db.initialize()
     
     
