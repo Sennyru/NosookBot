@@ -18,6 +18,7 @@ class CallLog(commands.Cog):
     
     CLOCK_ICONS = ['<:12:1456555755921473649>', '<:01:1456555005166354603>', '<:02:1456555007254990918>', '<:03:1456555009838682164>', '<:04:1456555012082897111>', '<:05:1456555014695686256>', '<:06:1456555016981577849>', '<:07:1456555018453782529>', '<:08:1456555019947085977>', '<:09:1456555021578666024>', '<:10:1456555757750194353>', '<:11:1456555760728277124>'] * 2
     MSG_DELETE_DELAY_MIN = 60
+    DEFAULT_TIME_SPAN = 13
     
     
     def __init__(self, bot: NosookBot):
@@ -109,7 +110,7 @@ class CallLog(commands.Cog):
             NosookBot.log(f"서버 {guild.id}의 타임라인 메시지({message_id})를 수정할 수 없습니다. 혹시 노숙봇이 아니신가요?")
     
     
-    async def create_timeline_embed(self, guild: discord.Guild, time_span=12, current=None) -> discord.Embed:
+    async def create_timeline_embed(self, guild: discord.Guild, time_span=DEFAULT_TIME_SPAN, current=None) -> discord.Embed:
         """ 실시간 타임라인 임베드를 생성한다. """
         
         INTERVAL = 60 * 60  # 1시간
@@ -229,7 +230,7 @@ class CallLog(commands.Cog):
     
     @commands.slash_command(name="타임라인", description="통화 기록을 보여줍니다.")
     async def slash_show_timeline(self, ctx: discord.ApplicationContext, time_span: discord.Option(
-        int, "최근 n시간의 기록 조회 (기간이 길 경우 임베드가 잘릴 수 있음)", min_value=1, max_value=24, default=12)):
+        int, "최근 n시간의 기록 조회 (기간이 길 경우 임베드가 잘릴 수 있음)", min_value=1, max_value=24, default=DEFAULT_TIME_SPAN)):
         await ctx.defer()
         await ctx.respond(embed=await self.create_timeline_embed(ctx.guild, time_span))
     
