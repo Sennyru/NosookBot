@@ -1,15 +1,11 @@
 import discord
 from discord.ext import commands, tasks
 from enum import Enum
-from os import environ
-from os.path import exists
-from base64 import b64decode
-import firebase_admin as firebase
-from firebase_admin import db
 from datetime import datetime
 from time import time
 from traceback import format_exc
 from nosookbot import NosookBot
+from ..db.repository import Repository
 
 
 class Status(Enum):
@@ -20,42 +16,16 @@ class Status(Enum):
 
 class CallLog(commands.Cog):
     
-    # CLOCK_ICONS = ['<:12:1456550818630336694>', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '<:11:1456550802897506334>', '<:12:1456550818630336694>', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '<:11:1456550802897506334>']
     CLOCK_ICONS = ['<:12:1456555755921473649>', '<:01:1456555005166354603>', '<:02:1456555007254990918>', '<:03:1456555009838682164>', '<:04:1456555012082897111>', '<:05:1456555014695686256>', '<:06:1456555016981577849>', '<:07:1456555018453782529>', '<:08:1456555019947085977>', '<:09:1456555021578666024>', '<:10:1456555757750194353>', '<:11:1456555760728277124>', '<:12:1456555755921473649>', '<:01:1456555005166354603>', '<:02:1456555007254990918>', '<:03:1456555009838682164>', '<:04:1456555012082897111>', '<:05:1456555014695686256>', '<:06:1456555016981577849>', '<:07:1456555018453782529>', '<:08:1456555019947085977>', '<:09:1456555021578666024>', '<:10:1456555757750194353>', '<:11:1456555760728277124>']
     MSG_DELETE_DELAY_MIN = 60
     
     
     def __init__(self, bot: NosookBot):
         self.bot = bot
+        self.db: Repository = bot.get_cog("Repository")
         
-        # 파이어베이스
-        if firebase._apps:
-            NosookBot.log("이미 파이어베이스에 연결됨")
-            return
-        
-        NosookBot.log("파이어베이스 연결 중...")
-        fb_admin = "firebase-admin.json"
-        
-        # 파일이 없거나 비어 있으면 생성
-        need_to_create = False
-        if not exists(fb_admin):
-            need_to_create = True
-            NosookBot.log(f"{fb_admin} 파일 없음. 생성 중...")
-        else:
-            with open(fb_admin, 'r') as f:
-                if not f.read():
-                    need_to_create = True
-                    NosookBot.log(f"{fb_admin} 파일 비어있음. 생성 중...")
-        if need_to_create:
-            with open(fb_admin, 'w') as f:
-                fb_admin_base64 = environ["FIREBASE_ADMIN_BASE64"]
-                f.write(b64decode(fb_admin_base64).decode("utf-8"))
-            NosookBot.log(f"{fb_admin} 생성 완료")
-        
-        cred = firebase.credentials.Certificate(fb_admin)
-        database_url = environ["DATABASE_URL"]
-        firebase.initialize_app(cred, {"databaseURL": database_url})
-        NosookBot.log("파이어베이스 로드 완료")
+        # DB 로드
+        self.db.initialize()
     
     
     @commands.Cog.listener()
@@ -65,7 +35,7 @@ class CallLog(commands.Cog):
         
         # 실시간 타임라인 업데이트
         NosookBot.log("실시간 타임라인 채널 초기화 중...")
-        realtime_data: dict = db.reference(f"{self.bot.release_channel}/realtime_channel").get() or {}
+        realtime_data: dict = self.db.read(f"{self.bot.release_channel}/realtime_channel")
         
         for guild_id in realtime_data:
             # 길드 찾기
@@ -104,10 +74,9 @@ class CallLog(commands.Cog):
         
         if guild is None:
             return
-        
-        ref = db.reference(f"{self.bot.release_channel}/realtime_channel/{guild.id}")
-        realtime_data: dict = ref.get()
-        if realtime_data is None:
+
+        realtime_data: dict = self.db.read(f"{self.bot.release_channel}/realtime_channel/{guild.id}")
+        if not realtime_data:
             return
         
         channel_id = int(realtime_data["channel"])
@@ -152,7 +121,7 @@ class CallLog(commands.Cog):
             current = int(time())
         end = current - current % INTERVAL + INTERVAL  # 타임라인 오른쪽 끝 시각
         start = end - time_span * INTERVAL  # 타임라인 왼쪽 끝 시각
-        call_log: dict[str, dict] = db.reference(f"{self.bot.release_channel}/call_log/{guild.id}").get() or {}
+        call_log: dict[str, dict] = self.db.read(f"{self.bot.release_channel}/call_log/{guild.id}")
         timeline: dict[str, list] = {}  # 멤버별 타임라인 저장
         
         has_unknown = False  # 알 수 없음 상태가 있는지 여부
@@ -271,7 +240,7 @@ class CallLog(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.slash_command(name="리얼타임", description="해당 채널을 실시간 타임라인이 뜨는 채널로 설정합니다.")
     async def slash_set_realtime_channel(self, ctx: discord.ApplicationContext):
-        channel_id = db.reference(f"{self.bot.release_channel}/realtime_channel/{ctx.guild.id}/channel").get()
+        channel_id: str = self.db.read(f"{self.bot.release_channel}/realtime_channel/{ctx.guild.id}/channel")
         if channel_id == str(ctx.channel.id):
             await ctx.respond("이미 실시간 타임라인 채널로 설정되어 있습니다.", ephemeral=True)
             return
@@ -282,7 +251,7 @@ class CallLog(commands.Cog):
                 
                 # 실시간 타임라인 채널로 설정
                 timeline = await interaction.channel.send(embed=await self.create_timeline_embed(interaction.guild))
-                db.reference(f"{self.bot.release_channel}/realtime_channel/{ctx.guild.id}").update({
+                self.db.update(f"{self.bot.release_channel}/realtime_channel/{ctx.guild.id}", {
                     "channel": str(ctx.channel.id),
                     "message": str(timeline.id)
                 })
@@ -343,7 +312,7 @@ class CallLog(commands.Cog):
         if action_time is None:
             action_time = int(time())
         
-        db.reference(f"{self.bot.release_channel}/call_log/{channel.guild.id}/{user_id}/{action_time}").update({
+        self.db.update(f"{self.bot.release_channel}/call_log/{channel.guild.id}/{user_id}/{action_time}", {
             "status": status.value,
             "channel": str(channel.id),
         })
@@ -355,7 +324,7 @@ class CallLog(commands.Cog):
             return
         
         # 실시간 타임라인 채널에 올라오는 메시지는 일정 시간 뒤에 삭제
-        channel_data = db.reference(f"{self.bot.release_channel}/realtime_channel/{message.guild.id}").get() or {}
+        channel_data = self.db.read(f"{self.bot.release_channel}/realtime_channel/{message.guild.id}")
         if not channel_data:
             return
         if not message.channel.id == int(channel_data["channel"]):
@@ -379,7 +348,7 @@ class CallLog(commands.Cog):
                 return
 
             NosookBot.log(f"{now.hour}시 정각! 타임라인 업데이트 중...")
-            for guild_id in db.reference(f"{self.bot.release_channel}/realtime_channel").get():
+            for guild_id in self.db.read(f"{self.bot.release_channel}/realtime_channel"):
                 try:
                     guild = self.bot.get_guild(int(guild_id)) or await self.bot.fetch_guild(int(guild_id))
                 except discord.errors.NotFound:
